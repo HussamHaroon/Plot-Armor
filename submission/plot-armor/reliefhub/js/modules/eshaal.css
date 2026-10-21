@@ -1,0 +1,6 @@
+/* Eshaal's module helpers — small extras on top of css/styles.css (not modified). */
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.row-actions { display: flex; gap: 6px; }
+.need-progress { display: flex; align-items: center; gap: 8px; }
+.toolbar-note { font-size: 12px; color: var(--muted); margin-left: auto; }
+.toolbar input[type="search"] { min-width: 230px; }

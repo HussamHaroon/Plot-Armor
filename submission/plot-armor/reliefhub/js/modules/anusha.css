@@ -1,0 +1,5 @@
+/* Extra bits for Syeda's modules (dispatches / donations / volunteers).
+   Kept out of the team styles.css since that file is owned by the team lead. */
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.hint { font-size: 12px; color: var(--muted); margin: 10px 2px 0; line-height: 1.5; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
