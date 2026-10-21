@@ -54,6 +54,8 @@
     setupMarquee();
     setupRouteSpine();
     setupChapters();
+    setupCursor();
+    setupMagnetic();
   }
 
   /* ---- 1. Preloader ritual: counter 000→100 + route line draw, ≤2.2s ---- */
@@ -220,6 +222,37 @@
         scrollTrigger: {
           trigger: img.closest('.chapter'), start: 'top bottom', end: 'bottom top', scrub: true,
         },
+      });
+    });
+  }
+
+  /* ---- 5. Custom cursor — the dot grows a [ VIEW ] pill over viewables ---- */
+  function setupCursor() {
+    const cur = document.querySelector('.cursor');
+    if (!cur) return;
+    const xTo = gsap.quickTo(cur, 'x', { duration: 0.35, ease: 'expo.out' });
+    const yTo = gsap.quickTo(cur, 'y', { duration: 0.35, ease: 'expo.out' });
+    window.addEventListener('mousemove', e => { xTo(e.clientX); yTo(e.clientY); }, { passive: true });
+    document.addEventListener('mouseover', e => {
+      if (e.target.closest('[data-view]')) cur.classList.add('is-view');
+    });
+    document.addEventListener('mouseout', e => {
+      if (e.target.closest('[data-view]')) cur.classList.remove('is-view');
+    });
+  }
+
+  /* ---- 6. Magnetic CTAs — pull toward the cursor, spring back on leave ---- */
+  function setupMagnetic() {
+    document.querySelectorAll('[data-magnet]').forEach(btn => {
+      const xTo = gsap.quickTo(btn, 'x', { duration: 0.4, ease: 'power3.out' });
+      const yTo = gsap.quickTo(btn, 'y', { duration: 0.4, ease: 'power3.out' });
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        xTo((e.clientX - r.left - r.width / 2) * 0.3);
+        yTo((e.clientY - r.top - r.height / 2) * 0.3);
+      });
+      btn.addEventListener('mouseleave', () => {
+        gsap.to(btn, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.4)', overwrite: 'auto' });
       });
     });
   }
