@@ -5,21 +5,15 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const _ = require('lodash');
-const moment = require('moment');
 const { query } = require('./db');
 
 const app = express();
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use(express.json());
-
-// remediated: credentials are read from the environment, never stored in source
-// (the pipeline demo previously had hardcoded dummy keys here - gate caught them)
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || '';
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || '';
-const JWT_SECRET = process.env.JWT_SECRET || '';
-if (!JWT_SECRET) {
-  console.warn('[config] JWT_SECRET is not set - auth endpoints will refuse to work');
-}
 
 // dummy camp data so the api has something to serve
 const camps = [
@@ -44,7 +38,7 @@ app.get('/api/status', (req, res) => {
     totalCapacity,
     totalOccupants,
     utilization: `${Math.round((totalOccupants / totalCapacity) * 100)}%`,
-    generatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+    generatedAt: new Date().toISOString().replace('T', ' ').slice(0, 19),
   });
 });
 
@@ -126,9 +120,13 @@ app.get('/api/camps', async (req, res) => {
   res.json(rows);
 });
 
-// remediated: sha256 instead of md5 for the demo "password hash" helper
+// remediated twice over: md5 -> sha256 -> scrypt with a random salt.
+// scrypt is node's stdlib memory-hard KDF, the right tool for passwords -
+// a plain digest (even sha256) is not a password hash.
 function hashPassword(plain) {
-  return crypto.createHash('sha256').update(plain).digest('hex');
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(plain), salt, 64).toString('hex');
+  return { algorithm: 'scrypt', salt, hash };
 }
 
 // demo route showing the hash helper in action (hashes whatever word you post)
@@ -137,7 +135,7 @@ app.post('/api/hash-password', (req, res) => {
   if (!password) {
     return res.status(400).json({ error: 'password is required' });
   }
-  res.json({ algorithm: 'sha256', hash: hashPassword(password) });
+  res.json(hashPassword(password));
 });
 
 const PORT = process.env.PORT || 3000;

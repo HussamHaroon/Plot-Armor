@@ -20,8 +20,13 @@ const API = {
       });
     } catch (networkErr) {
       /* free-tier hosts sleep when idle - first request wakes them (10-30s).
-       * retry once before giving up, then fall back to bundled demo data. */
-      if (method === 'GET' && !this._wokeRetry) {
+       * retry once before giving up, then fall back to bundled demo data.
+       * never retry when a local API is expected but the page is served
+       * remotely (e.g. github pages) - that request can never succeed. */
+      const apiIsLocal = /^(localhost|127\.0\.0\.1|\[::1\])(:|$)/.test(API_BASE);
+      const pageIsLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+      const wakeRetryMakesSense = !apiIsLocal || pageIsLocal;
+      if (method === 'GET' && !this._wokeRetry && wakeRetryMakesSense) {
         this._wokeRetry = true;
         if (typeof UI !== 'undefined' && UI.toast) {
           UI.toast('API is waking up, trying again in a few seconds…', 'info');

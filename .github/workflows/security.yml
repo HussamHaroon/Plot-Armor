@@ -6,7 +6,9 @@ name: Security Scan Pipeline
 
 on:
   push:
-    branches: ['team-plot-armor*']
+    branches: ['team-plot-armor*', 'main']
+  pull_request:
+    branches: ['team-plot-armor*', 'main']
   workflow_dispatch:
 
 permissions:
@@ -57,11 +59,11 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install app dependencies
         working-directory: submission/plot-armor/secure-pipeline/app
-        run: npm install
+        run: npm ci
 
       - name: Run npm audit
         # || true so the report is still produced, the gate decides

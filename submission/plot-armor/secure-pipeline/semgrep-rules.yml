@@ -65,7 +65,7 @@ rules:
   # 4) weak md5 hashing (also add sha1 to the same rule, same weakness class)
   - id: weak-hash-md5-sha1
     languages: [javascript]
-    severity: WARNING
+    severity: ERROR
     message: >-
       Weak hash algorithm passed to crypto.createHash(). MD5/SHA1 are broken
       for security purposes - use SHA-256 or better, and a real password
@@ -80,7 +80,7 @@ rules:
   #    (matches SELECT/INSERT/UPDATE/DELETE followed by ${...} or " + / ' + )
   - id: sql-query-string-concat
     languages: [javascript]
-    severity: WARNING
+    severity: ERROR
     message: >-
       SQL statement built with string interpolation or concatenation -
       SQL injection risk if user input reaches the query. Use parameterized

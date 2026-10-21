@@ -1,3 +1,7 @@
+# ⭐ TEAM PLOT ARMOR SUBMISSION — see [submission/plot-armor/README.md](submission/plot-armor/README.md) · Live demo: https://hussamharoon.github.io/Plot-Armor/
+
+---
+
 # 🚀 HacktoberFest-Hackathon 2026
 
 Welcome to the **HacktoberFest-Hackathon 2026**! 🎉  

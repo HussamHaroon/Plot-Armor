@@ -37,6 +37,7 @@ const App = {
   state: { role: localStorage.getItem('rh_role') || 'coordinator' },
   _renderSeq: 0,
   _revealIO: null,
+  _statsIO: null,
   _progressBar: null,
   _fxQueued: false,
 
@@ -120,24 +121,35 @@ const App = {
     });
   },
 
-  /* Fade+slide reveal for .reveal elements once they enter the viewport. */
+  /* Fade+slide reveal for .reveal elements once they enter the viewport.
+   * Revealing a row also triggers any data-w progress fills inside it. */
   observeReveals(root) {
     if (this._revealIO) this._revealIO.disconnect();
     const els = root.querySelectorAll('.reveal');
     if (!els.length) return;
     if (!('IntersectionObserver' in window)) {
-      els.forEach(el => el.classList.add('revealed'));
+      els.forEach(el => { el.classList.add('revealed'); this._fillBars(el); });
       return;
     }
     this._revealIO = new IntersectionObserver(entries => {
       for (const en of entries) {
         if (en.isIntersecting) {
           en.target.classList.add('revealed');
+          this._fillBars(en.target);
           this._revealIO.unobserve(en.target);
         }
       }
     }, { threshold: 0.15, rootMargin: '0px 0px -36px 0px' });
     els.forEach(el => this._revealIO.observe(el));
+  },
+
+  /* Progress fills tagged data-w render at width:0 and ease to their target
+   * once their row reveals (critical-needs teaser on #/home). Bars without
+   * data-w — every module page — are untouched. */
+  _fillBars(scope) {
+    scope.querySelectorAll('.progress > div[data-w]').forEach(f => {
+      f.style.width = f.dataset.w + '%';
+    });
   },
 
   _reduceMotion() {
@@ -179,6 +191,7 @@ const App = {
     document.body.dataset.route = mod.id;
     document.body.classList.toggle('route-home', landing);
     if (this._revealIO) this._revealIO.disconnect();
+    if (this._statsIO) this._statsIO.disconnect();
     this.renderNav();
     view.innerHTML = '';
     let skeleton = null;
@@ -308,12 +321,15 @@ App.registerModule({
         UI.h('p', { class: 'home-kicker' }, 'What we coordinate'),
         UI.h('h2', {}, 'Three moving parts, one shared picture'),
         UI.h('div', { class: 'home-features' }, features.map((f, i) =>
-          UI.h('article', { class: 'feature-card reveal', style: `--d:${i * 90}ms` }, [
-            UI.h('img', { class: 'feature-img', src: f.img, alt: f.title + ' — relief operations photo', loading: 'lazy', decoding: 'async' }),
-            UI.h('div', { class: 'feature-body' }, [
-              UI.h('h3', {}, f.title),
-              UI.h('p', {}, f.copy),
-              UI.h('a', { class: 'feature-link', href: f.link }, f.linkLabel + ' →'),
+          UI.h('article', { class: 'feature-card reveal', style: `--d:${i * 110}ms` }, [
+            /* inner wrapper takes the hover tilt so it never fights the reveal transform */
+            UI.h('div', { class: 'feature-tilt' }, [
+              UI.h('img', { class: 'feature-img', src: f.img, alt: f.title + ' — relief operations photo', loading: 'lazy', decoding: 'async' }),
+              UI.h('div', { class: 'feature-body' }, [
+                UI.h('h3', {}, f.title),
+                UI.h('p', {}, f.copy),
+                UI.h('a', { class: 'feature-link', href: f.link }, f.linkLabel + ' →'),
+              ]),
             ]),
           ]))),
       ]),
@@ -349,7 +365,8 @@ App.registerModule({
             UI.h('span', { class: 'gap-camp' }, 'at ' + ((campById[n.camp_id] || {}).name || 'Camp ' + n.camp_id)),
           ]),
           UI.h('div', { class: 'need-progress' }, [
-            UI.h('div', { class: 'progress' }, UI.h('div', { style: `width:${Math.min(p, 100)}%;background:${color}` })),
+            /* starts empty; eases to the data-w target once the row reveals */
+            UI.h('div', { class: 'progress' }, UI.h('div', { style: `width:0%;background:${color}`, 'data-w': String(Math.min(p, 100)) })),
             UI.h('span', {}, p + '%'),
           ]),
         ]);
@@ -375,9 +392,51 @@ App.registerModule({
       ]),
     ]));
 
-    /* Count-up starts on the frame after the node is appended to the view. */
-    requestAnimationFrame(() => this._runCountUps(root, stats));
+    /* Count-up waits until the stats strip scrolls into view; cards get pointer tilt. */
+    this._observeCountUps(root, stats);
+    this._setupTilt(root);
     return root;
+  },
+
+  /* Subtle 3D tilt on hover: pointer position drives --tx/--ty custom props;
+   * the inner .feature-tilt wrapper rotates (perspective from the card) and
+   * springs back on leave. Skipped for reduced motion and touch devices. */
+  _setupTilt(root) {
+    if (App._reduceMotion()) return;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    root.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('pointermove', e => {
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;   /* -0.5 .. 0.5 across the card */
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        card.style.setProperty('--ty', (px * 7).toFixed(2) + 'deg');
+        card.style.setProperty('--tx', (-py * 5).toFixed(2) + 'deg');
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.setProperty('--tx', '0deg');
+        card.style.setProperty('--ty', '0deg');
+      });
+    });
+  },
+
+  /* Count-up triggers when the stats strip scrolls into view (once), so the
+   * numbers spin up in front of whoever is scrolling instead of on page load.
+   * Reduced motion (or no IntersectionObserver) lands the values immediately.
+   * Works unchanged in demo mode: api.js falls back to bundled db.json, the
+   * strip just counts up the demo numbers the same way. */
+  _observeCountUps(root, stats) {
+    const run = () => this._runCountUps(root, stats);
+    const band = root.querySelector('.home-stats');
+    if (App._reduceMotion() || !band || !('IntersectionObserver' in window)) return run();
+    /* lives on App so render()'s route-change cleanup can disconnect it */
+    if (App._statsIO) App._statsIO.disconnect();
+    App._statsIO = new IntersectionObserver(entries => {
+      if (entries.some(en => en.isIntersecting)) {
+        App._statsIO.disconnect();
+        run();
+      }
+    }, { threshold: 0.3 });
+    App._statsIO.observe(band);
   },
 
   _runCountUps(root, stats) {
@@ -385,7 +444,13 @@ App.registerModule({
     numerals.forEach((el, i) => {
       const s = stats[i];
       if (!s) return;
-      const finish = () => { el.textContent = s.format(s.value); };
+      const finish = () => {
+        el.textContent = s.format(s.value);
+        /* soft brand-glow pulse as each counter lands */
+        el.classList.add('count-done');
+        const stat = el.closest('.stat');
+        if (stat) stat.classList.add('stat-done');
+      };
       if (App._reduceMotion()) return finish();
       const t0 = performance.now(), dur = 1100;
       (function tick(t) {

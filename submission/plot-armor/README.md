@@ -23,13 +23,13 @@ A coordination dashboard for flood-relief operations in Sindh: camp registry wit
 cd reliefhub
 npx -y json-server@0.17.4 api-server/db.json --port 3000
 python -m http.server 8080
-# open http://localhost:8080  (add ?api=http://localhost:3011 to point at another API instance)
+# open http://localhost:8080  (?api=<url> points the app at any running API instance)
 ```
-Without an API server the app automatically falls back to the bundled seed data in read-only demo mode.
+Without an API server the app automatically falls back to the bundled seed data in read-only demo mode. The same API also runs containerized on a free Hugging Face Space for the public demo.
 
 ## 2) Automated Security Vulnerability Scanning in a CI/CD Pipeline *(issue #2, DevOps)*
 
-A DevSecOps pipeline that scans a sample camp-status API (Node/Express + Docker) with **Semgrep** (custom hand-written rules), **npm audit** (dependency CVEs), **Gitleaks** (secrets) and **Trivy** (container image + filesystem), then enforces a **policy gate** that fails the build on any Critical/High finding and publishes a consolidated HTML findings dashboard. The Actions history shows the full story: a red run that caught 48 findings on the intentionally vulnerable version, a remediation wave (env-based credentials, safe expression parser replacing `eval`, parameterized queries, sha256, patched lodash/moment), then a green run with documented `.trivyignore` exceptions for base-image/npm-toolchain CVEs. The AWS extension (ECR + Inspector + S3 report archival via OIDC, no long-lived keys) is documented as `aws-deploy.example.yml`.
+A DevSecOps pipeline that scans a sample camp-status API (Node/Express + Docker) with **Semgrep** (custom hand-written rules), **npm audit** (dependency CVEs), **Gitleaks** (secrets) and **Trivy** (container image + filesystem), then enforces a **policy gate** that fails the build on any Critical/High finding — and **fails closed** if any scanner fails to produce a report — publishing a consolidated HTML findings dashboard. The Actions history shows the full story: a red run that caught 48 findings on the intentionally vulnerable version, a remediation wave (env-based credentials, safe expression parser replacing `eval`, parameterized queries, salted scrypt password hashing, helmet + rate limiting, moment replaced with native date, patched lodash), then a green run on a current base image (node:24-alpine). The AWS extension (ECR + Inspector + S3 report archival via OIDC, no long-lived keys) is documented as `aws-deploy.example.yml`.
 
 **Run:** push to any `team-plot-armor*` branch (or use workflow_dispatch) — the pipeline lives at `.github/workflows/security.yml`. Local report generator: `python secure-pipeline/scripts/report.py --reports-dir secure-pipeline/scripts/fixtures`.
 
