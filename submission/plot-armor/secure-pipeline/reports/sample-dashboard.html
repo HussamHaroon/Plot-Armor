@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plot Armor - Security Dashboard</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: #0d1117; color: #e6edf3; padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #8b949e; font-size: 13px; margin-bottom: 24px; }
+  .banner {
+    border-radius: 10px; padding: 18px 22px; margin-bottom: 26px;
+    font-size: 18px; font-weight: 700; letter-spacing: 1px;
+    border: 1px solid;
+  }
+  .banner.fail { background: rgba(231,76,60,.12); border-color: #e74c3c; color: #ff8a7a; }
+  .banner.pass { background: rgba(46,204,113,.10); border-color: #2ecc71; color: #7ee2a8; }
+  .banner small { display:block; font-weight:400; letter-spacing:0; margin-top:6px; color:#8b949e; font-size:12px; }
+  .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:14px; margin-bottom:30px; }
+  .card {
+    background:#161b22; border:1px solid #30363d; border-radius:10px;
+    padding:18px 14px; text-align:center;
+  }
+  .card .num { font-size:30px; font-weight:800; }
+  .card .lbl { color:#8b949e; font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+  .card.crit .num { color:#e74c3c; }
+  .card.high .num { color:#e67e22; }
+  .card.med .num { color:#f1c40f; }
+  .card.low .num, .card.total .num, .card.src .num { color:#2ecc71; }
+  h2 { font-size:15px; margin-bottom:10px; color:#c9d1d9; }
+  table { width:100%; border-collapse:collapse; background:#161b22; border:1px solid #30363d; border-radius:10px; overflow:hidden; margin-bottom:30px; }
+  th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#8b949e; padding:10px 12px; background:#1c2129; border-bottom:1px solid #30363d; }
+  td { padding:10px 12px; border-bottom:1px solid #21262d; font-size:13px; vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:99px; color:#0d1117; font-weight:700; font-size:11px; letter-spacing:.5px; }
+  .src-cell { color:#79c0ff; white-space:nowrap; font-weight:600; }
+  .title-cell { max-width:480px; word-break:break-word; }
+  .loc-cell { color:#8b949e; font-family:Consolas,monospace; font-size:12px; word-break:break-all; }
+  .empty { text-align:center; color:#8b949e; padding:26px; }
+  table.sources { margin-bottom:34px; }
+  .st.ok { color:#2ecc71; }
+  .st.warn { color:#f1c40f; }
+  footer { color:#484f58; font-size:11px; text-align:center; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Plot Armor &mdash; Security Dashboard</h1>
+  <div class="sub">aggregated report &middot; generated 2026-10-21 06:18 UTC</div>
+
+  <div class="banner fail">
+    PIPELINE VERDICT: FAILED
+    <small>policy gate: pipeline fails when any CRITICAL or HIGH finding is present</small>
+  </div>
+
+  <div class="cards">
+      <div class="card total"><div class="num">12</div><div class="lbl">total findings</div></div>
+      <div class="card crit"><div class="num">1</div><div class="lbl">critical</div></div>
+      <div class="card high"><div class="num">7</div><div class="lbl">high</div></div>
+      <div class="card med"><div class="num">3</div><div class="lbl">medium</div></div>
+      <div class="card low"><div class="num">1</div><div class="lbl">low</div></div>
+      <div class="card src"><div class="num">5</div><div class="lbl">sources scanned</div></div>
+    </div>
+
+  <h2>Sources scanned</h2>
+  <table class="sources">
+    <tr><th>scanner</th><th>status</th></tr>
+    <tr><td>semgrep</td><td class="st ok">ok</td></tr><tr><td>npm-audit</td><td class="st ok">ok</td></tr><tr><td>trivy-image</td><td class="st ok">ok</td></tr><tr><td>trivy-fs</td><td class="st ok">ok</td></tr><tr><td>gitleaks</td><td class="st ok">ok</td></tr>
+  </table>
+
+  <h2>Findings</h2>
+  <table>
+    <tr><th>source</th><th>severity</th><th>title / message</th><th>location</th></tr>
+    <tr><td class="src-cell">trivy-image</td><td><span class="pill" style="background:#e74c3c">CRITICAL</span></td><td class="title-cell">CVE-2024-2151 glibc@2.36-9+deb12u3 - glibc: out of bounds write in syslog</td><td class="loc-cell">scan-target (debian 12.8)</td></tr><tr><td class="src-cell">gitleaks</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">secret detected: generic-api-key</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/server.js:12</td></tr><tr><td class="src-cell">gitleaks</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">secret detected: aws-access-token</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/config.js:9</td></tr><tr><td class="src-cell">npm-audit</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">lodash: Command Injection in lodash (&lt;=4.17.20) [fix available]</td><td class="loc-cell">node_modules/lodash</td></tr><tr><td class="src-cell">semgrep</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">hardcoded API key detected - dummy key marked for security demo</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/server.js:12</td></tr><tr><td class="src-cell">semgrep</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">use of eval() can execute arbitrary code</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/routes/parse.js:34</td></tr><tr><td class="src-cell">trivy-image</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">CVE-2023-4863 libwebp@1.2.2-1 - libwebp: heap buffer overflow in WebP decoder</td><td class="loc-cell">scan-target (debian 12.8)</td></tr><tr><td class="src-cell">trivy-image</td><td><span class="pill" style="background:#e67e22">HIGH</span></td><td class="title-cell">GHSA-35jh-r3h4-6jhm lodash@4.17.20 - Command Injection in lodash</td><td class="loc-cell">node-app/package-lock.json</td></tr><tr><td class="src-cell">semgrep</td><td><span class="pill" style="background:#f1c40f">MEDIUM</span></td><td class="title-cell">md5 is a weak hashing algorithm, use bcrypt instead</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/routes/auth.js:51</td></tr><tr><td class="src-cell">semgrep</td><td><span class="pill" style="background:#f1c40f">MEDIUM</span></td><td class="title-cell">SQL query built via string concatenation - SQL injection risk</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/routes/users.js:78</td></tr><tr><td class="src-cell">trivy-fs</td><td><span class="pill" style="background:#f1c40f">MEDIUM</span></td><td class="title-cell">GHSA-wc69-rhjr-hc9g moment@2.24.0 - moment: Regular Expression Denial of Service</td><td class="loc-cell">submission/plot-armor/secure-pipeline/app/package-lock.json</td></tr><tr><td class="src-cell">npm-audit</td><td><span class="pill" style="background:#2ecc71">LOW</span></td><td class="title-cell">moment: Regular Expression Denial of Service in moment (&lt;2.24.0) [fix available]</td><td class="loc-cell">node_modules/moment</td></tr>
+  </table>
+
+  <footer>secure-pipeline &middot; generated by scripts/report.py (stdlib only, no external deps)</footer>
+</div>
+</body>
+</html>

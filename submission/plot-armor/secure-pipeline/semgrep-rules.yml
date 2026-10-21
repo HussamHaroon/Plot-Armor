@@ -1,0 +1,88 @@
+# custom semgrep rules for the plot armor secure pipeline demo (issue #2)
+# written by hand, no registry rules needed - these target the intentional
+# demo vulnerability patterns we planted in the camp status api
+# usage: semgrep scan --config semgrep-rules.yml app/
+
+rules:
+  # 1) hardcoded aws access key id anywhere in the source
+  - id: hardcoded-aws-access-key-id
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      Hardcoded AWS access key id found. Never commit credentials -
+      load them from environment variables or a secrets manager instead.
+    pattern-regex: AKIA[0-9A-Z]{16}
+
+  # 2) hardcoded assignment of a secret-looking string to a secret-looking variable
+  #    (catches our dummy AWS_SECRET_ACCESS_KEY and JWT_SECRET values)
+  - id: hardcoded-secret-assignment
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      Variable $VAR looks like a secret and is assigned a hardcoded string
+      literal. Move secrets to environment variables or a secrets manager.
+    patterns:
+      - pattern-either:
+          - pattern: const $VAR = $SECRET
+          - pattern: let $VAR = $SECRET
+          - pattern: var $VAR = $SECRET
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: "(?i).*(secret|password|passwd|token|api[_-]?key|access[_-]?key).*"
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: "^['\"].{12,}['\"]$"
+
+  # 3) eval() of anything inside an express request handler - user input can
+  #    reach it in our demo (/api/calc?expr=...) which means remote code execution
+  - id: eval-in-express-handler
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      eval() called inside an express handler - request input can reach eval()
+      which is remote code execution. Remove eval() entirely and parse the input
+      with a safe expression parser instead.
+    patterns:
+      - pattern: eval($X)
+      - pattern-either:
+          - pattern-inside: |
+              app.get($PATH, ($REQ, $RES) => {
+                ...
+              })
+          - pattern-inside: |
+              app.post($PATH, ($REQ, $RES) => {
+                ...
+              })
+          - pattern-inside: |
+              app.put($PATH, ($REQ, $RES) => {
+                ...
+              })
+          - pattern-inside: |
+              app.delete($PATH, ($REQ, $RES) => {
+                ...
+              })
+
+  # 4) weak md5 hashing (also add sha1 to the same rule, same weakness class)
+  - id: weak-hash-md5-sha1
+    languages: [javascript]
+    severity: WARNING
+    message: >-
+      Weak hash algorithm passed to crypto.createHash(). MD5/SHA1 are broken
+      for security purposes - use SHA-256 or better, and a real password
+      hashing scheme (bcrypt/scrypt/argon2) for passwords.
+    pattern-either:
+      - pattern: crypto.createHash('md5')
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash('sha1')
+      - pattern: crypto.createHash("sha1")
+
+  # 5) sql query built with string interpolation/concatenation
+  #    (matches SELECT/INSERT/UPDATE/DELETE followed by ${...} or " + / ' + )
+  - id: sql-query-string-concat
+    languages: [javascript]
+    severity: WARNING
+    message: >-
+      SQL statement built with string interpolation or concatenation -
+      SQL injection risk if user input reaches the query. Use parameterized
+      queries / prepared statements instead.
+    pattern-regex: "(?i)(select|insert|update|delete)[^\\n]{0,80}(\\$\\{|\"\\s*\\+|'\\s*\\+)"

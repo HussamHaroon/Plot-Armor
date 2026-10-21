@@ -1,0 +1,101 @@
+# =============================================================================
+# AWS Integration (Bonus — Milestone 8 of issue #2)
+# -----------------------------------------------------------------------------
+# Documented extension of the security pipeline: how an APPROVED build flows
+# into AWS. This file is intentionally inert documentation (it lives outside
+# .github/workflows/ so GitHub never executes it). To activate, copy to
+# .github/workflows/, fill in the repo variables, and provision the secrets.
+#
+# Flow:  security gate passes  ->  image pushed to Amazon ECR
+#        ->  Amazon Inspector scans the pushed image
+#        ->  only approved images deploy  ->  reports archived to S3
+#
+# Prerequisites (least-privilege by design):
+#   OIDC identity provider between this repo and AWS IAM (no long-lived keys):
+#     aws iam create-open-id-connect-provider \
+#       --url https://token.actions.githubusercontent.com --client-id-list sts.amazonaws.com
+#   An IAM role (e.g. plot-armor-cicd) trusted by the repo, allowing only:
+#     ecr:GetAuthorizationToken, ecr:PutImage on the specific repo ARN,
+#     inspector:ListFindings / inspector:DescribeFindings (or inspector2:*scan*),
+#     s3:PutObject on the reports prefix.
+#   Secrets/variables: AWS_ROLE_ARN, ECR_REGISTRY, ECR_REPO, S3_REPORTS_BUCKET
+#   S3 bucket: versioning ON, public access blocked, SSE-S3 encryption.
+# =============================================================================
+
+# --- uncomment to activate ---------------------------------------------------
+# name: aws-secure-deploy (bonus)
+# on:
+#   workflow_run:
+#     workflows: ["security"]   # only after the security pipeline SUCCEEDS
+#     types: [completed]
+#     branches: [team-plot-armor]
+#
+# jobs:
+#   push-to-ecr:
+#     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#     runs-on: ubuntu-latest
+#     permissions:
+#       id-token: write          # OIDC — no stored AWS credentials
+#       contents: read
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#           aws-region: us-east-1
+#       - id: login
+#         uses: aws-actions/amazon-ecr-login@v2
+#       - name: Build and push approved image
+#         env:
+#           IMAGE: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPO }}:${{ github.sha }}
+#         run: |
+#           docker build -t "$IMAGE" submission/plot-armor/secure-pipeline/app
+#           docker push "$IMAGE"
+#           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+#
+#   inspector-scan:
+#     needs: push-to-ecr
+#     runs-on: ubuntu-latest
+#     permissions: { id-token: write, contents: read, security-events: write }
+#     steps:
+#       - uses: aws-actions/configure-aws-credentials@v4
+#         with: { role-to-assume: "${{ secrets.AWS_ROLE_ARN }}", aws-region: us-east-1 }
+#       - name: Scan the pushed image with Amazon Inspector
+#         run: |
+#           # Inspector scans ECR images automatically on push when enabled for
+#           # the registry; this step pulls the findings and exports a report.
+#           aws inspector2 list-findings \
+#             --filter-criteria '{"repositoryUri":[{"comparison":"EQUALS","value":"${{ secrets.ECR_REPO }}"}]}' \
+#             --output json > inspector-findings.json
+#           python - <<'EOF'
+#           import json, sys
+#           f = json.load(open("inspector-findings.json")).get("findings", [])
+#           sev = {}
+#           for x in f:
+#               sev[x["severity"]] = sev.get(x["severity"], 0) + 1
+#           print("Inspector findings:", sev or "none")
+#           if any(s in sev for s in ("CRITICAL", "HIGH")):
+#               sys.exit("UNSAFE IMAGE — deploy blocked")
+#           EOF
+#       - uses: actions/upload-artifact@v4
+#         with: { name: inspector-findings, path: inspector-findings.json }
+#
+#   deploy-approved-and-archive:
+#     needs: inspector-scan          # only approved images reach deployment
+#     runs-on: ubuntu-latest
+#     permissions: { id-token: write, contents: read }
+#     steps:
+#       - uses: aws-actions/configure-aws-credentials@v4
+#         with: { role-to-assume: "${{ secrets.AWS_ROLE_ARN }}", aws-region: us-east-1 }
+#       - name: Archive security reports to S3 (versioned, private)
+#         run: |
+#           aws s3 cp inspector-findings.json \
+#             "s3://${{ secrets.S3_REPORTS_BUCKET }}/reports/${{ github.sha }}/inspector-findings.json" \
+#             --sse AES256
+#       - name: Deploy (example: update an ECS service with the approved tag)
+#         run: |
+#           aws ecs update-service --cluster plot-armor \
+#             --service camp-status-api \
+#             --force-new-deployment
+#           echo "deployed approved image ${{ github.sha }}"
+# -----------------------------------------------------------------------------

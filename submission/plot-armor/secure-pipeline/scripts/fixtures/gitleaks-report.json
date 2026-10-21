@@ -1,0 +1,32 @@
+[
+  {
+    "Description": "Generic API Key",
+    "StartLine": 12,
+    "EndLine": 12,
+    "StartColumn": 20,
+    "EndColumn": 60,
+    "Match": "API_KEY=\\\"sk-live-51DEMO000000000dummy000\\\"",
+    "Secret": "sk-live-51DEMO000000000dummy000",
+    "File": "submission/plot-armor/secure-pipeline/app/server.js",
+    "RuleID": "generic-api-key",
+    "Fingerprint": "server.js:generic-api-key:12",
+    "Author": "eshaal",
+    "Commit": "abc1234",
+    "Date": "2026-10-20T08:00:00Z"
+  },
+  {
+    "Description": "AWS Access Key",
+    "StartLine": 9,
+    "EndLine": 9,
+    "StartColumn": 15,
+    "EndColumn": 55,
+    "Match": "AWS_SECRET_ACCESS_KEY=\\\"wJalrXUtnFEMIdummySECRETKEY000\\\"",
+    "Secret": "wJalrXUtnFEMIdummySECRETKEY000",
+    "File": "submission/plot-armor/secure-pipeline/app/config.js",
+    "RuleID": "aws-access-token",
+    "Fingerprint": "config.js:aws-access-token:9",
+    "Author": "eshaal",
+    "Commit": "abc1234",
+    "Date": "2026-10-20T08:00:00Z"
+  }
+]

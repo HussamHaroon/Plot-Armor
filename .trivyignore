@@ -1,0 +1,53 @@
+# =============================================================================
+# Documented exceptions for the trivy container image scan (issue #2, M6)
+#
+# Every ID below is a finding in the node:20-alpine BASE IMAGE or in the npm
+# build toolchain that ships inside it (/usr/local/lib/node_modules/npm) -
+# none of them are dependencies of the camp-status application itself
+# (app deps are covered by the npm audit job, which is clean).
+#
+# Policy: these are accepted temporarily and must be reviewed at the date
+# below. When patched base images are published, remove the relevant lines
+# so the gate blocks on them again.
+#   review-by: 2027-01-21 (90 days)
+#   tracked-by: security gate dashboard (artifact "security-dashboard")
+# =============================================================================
+
+# --- alpine 3.23.4 system packages (libssl3 / libcrypto3) -------------------
+# openssl DoS via unbounded memory growth in QUIC server
+CVE-2026-14456
+# openssl heap use-after-free in PKCS7_verify()
+CVE-2026-45447
+
+# --- npm toolchain bundled in the base image (build-time only) --------------
+# node-tar: DoS via crafted gzip bomb (critical - npm's own tar, not our dep)
+CVE-2026-59873
+# node-tar: symlink poisoning / path traversal family
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960
+CVE-2026-29786
+CVE-2026-31802
+CVE-2026-59874
+CVE-2026-73566
+# minimatch: backtracking DoS family
+CVE-2026-26996
+CVE-2026-27903
+CVE-2026-27904
+# brace-expansion: recursion/exponential DoS family
+CVE-2026-102276
+CVE-2026-102278
+CVE-2026-13149
+CVE-2026-14257
+CVE-2026-69152
+# cross-spawn: redos
+CVE-2024-21538
+# glob: command injection via malicious filenames
+CVE-2025-64756
+# ip-address: SSRF via inconsistent parsing
+CVE-2026-69192
+# pacote: DoS via crafted rawSpec
+CVE-2026-9496
+# sigstore: certificate OID verification bypass
+CVE-2026-48815

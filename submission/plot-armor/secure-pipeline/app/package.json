@@ -1,0 +1,15 @@
+{
+  "name": "reliefhub-camp-status-api",
+  "version": "1.0.0",
+  "description": "sample camp status api for the secure pipeline demo (contains intentional dummy vulnerabilities for scanning)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "lodash": "4.18.1",
+    "moment": "2.31.0"
+  }
+}

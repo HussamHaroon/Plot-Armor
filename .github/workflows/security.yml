@@ -1,0 +1,173 @@
+name: Security Scan Pipeline
+
+# Plot Armor - Milestones 2-7 of issue #2 (DevSecOps)
+# scanners run independently, the gate-and-report job is the single
+# place that decides pass/fail for the whole pipeline.
+
+on:
+  push:
+    branches: ['team-plot-armor*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------- 1. static analysis with our custom semgrep rules ----------
+  semgrep:
+    name: semgrep (custom rules)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install semgrep
+        run: pip install semgrep
+
+      - name: Run semgrep scan with custom rules
+        # continue-on-error: findings must FAIL the gate, not this scan step
+        continue-on-error: true
+        run: |
+          semgrep scan \
+            --config submission/plot-armor/secure-pipeline/semgrep-rules.yml \
+            --json \
+            --output semgrep-report.json \
+            submission/plot-armor/secure-pipeline/app
+
+      - name: Upload semgrep report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep-report.json
+
+  # ---------- 2. dependency audit ----------
+  dependencies:
+    name: npm audit (dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install app dependencies
+        working-directory: submission/plot-armor/secure-pipeline/app
+        run: npm install
+
+      - name: Run npm audit
+        # || true so the report is still produced, the gate decides
+        working-directory: submission/plot-armor/secure-pipeline/app
+        run: npm audit --json > npm-audit.json || true
+
+      - name: Upload npm audit report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: submission/plot-armor/secure-pipeline/app/npm-audit.json
+
+  # ---------- 3. secret scanning ----------
+  secrets:
+    name: gitleaks (secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks secret scan
+        # continue-on-error: leaks must FAIL the gate, not this scan step
+        continue-on-error: true
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'true'
+          GITLEAKS_UPLOAD_ARTIFACT_NO_SARIF: 'true'
+        uses: gitleaks/gitleaks-action@v2
+
+  # ---------- 4. container scanning ----------
+  container:
+    name: trivy (container + fs)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build -t scan-target submission/plot-armor/secure-pipeline/app
+
+      - name: Trivy image scan (HIGH/CRITICAL)
+        # exit-code 0: findings must FAIL the gate, not this scan step
+        # ignore-unfixed: documented exception policy - CVEs with no available
+        # fix in the base image are tracked but do not block the pipeline
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: scan-target
+          format: json
+          output: trivy-image.json
+          severity: HIGH,CRITICAL
+          exit-code: 0
+          ignore-unfixed: true
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: submission/plot-armor/secure-pipeline/app
+          format: json
+          output: trivy-fs.json
+          exit-code: 0
+          ignore-unfixed: true
+
+      - name: Upload trivy reports artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: |
+            trivy-image.json
+            trivy-fs.json
+
+  # ---------- 5. policy gate + dashboard ----------
+  gate-and-report:
+    name: security gate + dashboard
+    runs-on: ubuntu-latest
+    needs: [semgrep, dependencies, secrets, container]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download all scan reports
+        # merge-multiple flattens every artifact into the workspace root
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+          merge-multiple: true
+
+      - name: Enforce security gate (fails on any HIGH or CRITICAL)
+        run: python submission/plot-armor/secure-pipeline/scripts/report.py --gate --reports-dir .
+
+      - name: Generate dashboard
+        if: always()
+        run: python submission/plot-armor/secure-pipeline/scripts/report.py --reports-dir . --output dashboard.html
+
+      - name: Upload security dashboard artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-dashboard
+          path: dashboard.html

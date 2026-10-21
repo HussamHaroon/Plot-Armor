@@ -1,0 +1,49 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "lodash": {
+      "name": "lodash",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1,
+          "name": "lodash",
+          "dependency": "lodash",
+          "title": "Command Injection in lodash",
+          "url": "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+          "severity": "high",
+          "range": "<=4.17.20"
+        }
+      ],
+      "effects": [],
+      "range": "<=4.17.20",
+      "nodes": ["node_modules/lodash"],
+      "fixAvailable": { "name": "lodash", "version": "4.17.21", "isSemVerMajor": false }
+    },
+    "moment": {
+      "name": "moment",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 2,
+          "name": "moment",
+          "dependency": "moment",
+          "title": "Regular Expression Denial of Service in moment",
+          "url": "https://github.com/advisories/GHSA-wc69-rhjr-hc9g",
+          "severity": "low",
+          "range": "<2.24.0"
+        }
+      ],
+      "effects": [],
+      "range": "<2.24.0",
+      "nodes": ["node_modules/moment"],
+      "fixAvailable": { "name": "moment", "version": "2.29.4", "isSemVerMajor": false }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": { "info": 0, "low": 1, "moderate": 0, "high": 1, "critical": 0 },
+    "dependencies": { "prod": 2, "dev": 0, "optional": 0, "peer": 0 }
+  }
+}
