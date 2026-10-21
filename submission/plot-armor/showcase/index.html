@@ -3,77 +3,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Team Plot Armor — HacktoberFest Hackathon 2026</title>
+  <title>Team Plot Armor — Three problems, one relay · HacktoberFest 3.0</title>
+  <meta name="description" content="Team Plot Armor at HacktoberFest 3.0: ReliefHub (web/app), an automated security pipeline (DevOps) and Noisy Labels: HelpDeskNet-50K (AI/ML) — three checkpoints, one relay.">
+  <meta name="theme-color" content="#052a1f">
   <link rel="icon" href="../reliefhub/assets/images/logo-mark.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --brand: #0d5c46; --brand-deep: #083d2e; --brand-ink: #052a1f;
-      --brand-500: #10b981; --brand-100: #d1fae5; --bg: #eef2f5; --ink: #0f172a;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
-    .hero { background: linear-gradient(135deg, var(--brand-ink), var(--brand-deep) 55%, var(--brand)); color: #ecfdf5; padding: 72px 24px 60px; text-align: center; }
-    .eyebrow { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: #6ee7b7; font-weight: 600; }
-    .hero h1 { font-family: Sora, sans-serif; font-size: clamp(30px, 5vw, 48px); margin: 12px 0 10px; }
-    .hero p { max-width: 640px; margin: 0 auto; color: #d1fae5; font-size: 15.5px; line-height: 1.6; }
-    .hero .links { margin-top: 26px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .hero a.btn { background: var(--brand-500); color: #052a1f; font-weight: 700; padding: 11px 22px; border-radius: 999px; text-decoration: none; font-size: 14px; }
-    .hero a.btn.ghost { background: rgba(255,255,255,.08); color: #ecfdf5; border: 1px solid rgba(209,250,229,.3); }
-    main { max-width: 1080px; margin: -28px auto 60px; padding: 0 20px; display: grid; gap: 22px; }
-    .card { background: #fff; border-radius: 18px; padding: 26px 28px; box-shadow: 0 10px 30px -18px rgba(5,42,31,.35); border: 1px solid #e2e8f0; }
-    .card .tag { display: inline-block; background: var(--brand-100); color: var(--brand); font-size: 11.5px; font-weight: 700; padding: 4px 12px; border-radius: 999px; letter-spacing: .5px; }
-    .card h2 { font-family: Sora, sans-serif; font-size: 21px; margin: 12px 0 6px; }
-    .card p { color: #334155; font-size: 14.5px; line-height: 1.65; margin: 0 0 14px; }
-    .card a { color: var(--brand); font-weight: 600; text-decoration: none; border-bottom: 1.5px solid var(--brand-500); }
-    .facts { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
-    .facts span { background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 12.5px; padding: 6px 12px; border-radius: 999px; color: #334155; }
-    .plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 6px 0 14px; }
-    .plots img { width: 100%; border-radius: 12px; border: 1px solid #e2e8f0; }
-    footer { text-align: center; color: #64748b; font-size: 13px; padding: 18px; }
-  </style>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    /* motion gate: GSAP choreography only for fine pointers without reduced-motion */
+    (function () {
+      try {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        if (!reduce && fine) document.documentElement.classList.add('has-motion');
+      } catch (e) { /* static page */ }
+    })();
+  </script>
 </head>
 <body>
-  <div class="hero">
-    <div class="eyebrow">HacktoberFest-Hackathon 2026 · AWSCloudClubMUET</div>
-    <h1>Team Plot Armor</h1>
-    <p>Three problems solved across Web/App, DevOps and AI/ML — built collaboratively on a fork with per-member branches, reviewed merges, and a red→green security pipeline. Everything below is viewable in your browser right now.</p>
-    <div class="links">
-      <a class="btn" href="../reliefhub/">🚀 Open ReliefHub live demo</a>
-      <a class="btn ghost" href="https://github.com/HussamHaroon/Plot-Armor">Repository</a>
-      <a class="btn ghost" href="https://github.com/HussamHaroon/Plot-Armor/actions">CI / Actions</a>
-    </div>
+  <!-- preloader ritual: mono counter + route line draw, ≤2.2s, skipped without motion -->
+  <div class="preloader" aria-hidden="true">
+    <div class="pre-count">000</div>
+    <svg class="pre-route" viewBox="0 0 320 24" fill="none">
+      <line class="pre-route-base" x1="0" y1="12" x2="320" y2="12"/>
+      <line class="pre-route-draw" x1="0" y1="12" x2="320" y2="12"/>
+      <circle class="pre-route-dot" cx="0" cy="12" r="4"/>
+    </svg>
+    <p class="mono-label pre-mono">[ Plot Armor · Loading manifest ]</p>
   </div>
-  <main>
-    <div class="card">
-      <span class="tag">ISSUE #10 · WEB/APP</span>
-      <h2>ReliefHub — Flood Relief Coordination Dashboard</h2>
-      <p>Full coordination platform for Sindh flood response: camp registry with capacity auto-status, needs vs warehouse inventory with fulfilment tracking, dispatches with strict stock-reservation rules (validated end-to-end), donations, volunteer assignment, and a KPI dashboard that surfaces critical gaps. Vanilla-JS module framework, role-based views, video banners, landing page with live stats, and a read-only demo mode when no API is running.</p>
-      <div class="facts"><span>7 modules</span><span>6 milestones</span><span>E2E-tested business rules</span><span>demo-mode deployment</span></div>
-      <p><a href="../reliefhub/">Open the live demo →</a></p>
-    </div>
-    <div class="card">
-      <span class="tag">ISSUE #2 · DEVOPS</span>
-      <h2>Automated Security Scanning in CI/CD</h2>
-      <p>A DevSecOps pipeline scanning a sample Node/Express + Docker app with Semgrep (hand-written rules), npm audit, Gitleaks and Trivy (image + filesystem), enforcing a policy gate that fails builds on Critical/High findings and publishing a consolidated dashboard. The Actions history shows the full story: a <strong>red run that caught 48 findings</strong>, a remediation wave (env credentials, safe parser replacing eval, parameterized queries, sha256, patched deps), then a <strong>green run</strong> with documented base-image exceptions. The AWS extension (ECR + Inspector + S3 via OIDC) is documented in <code>aws-deploy.example.yml</code>.</p>
-      <div class="facts"><span>5 scan jobs + gate</span><span>red → green evidence</span><span>48 findings caught</span><span>.trivyignore with review dates</span></div>
-      <p><a href="../secure-pipeline/reports/sample-dashboard.html">View the security findings dashboard →</a> &nbsp;·&nbsp; <a href="https://github.com/HussamHaroon/Plot-Armor/actions/workflows/security.yml">Pipeline runs →</a></p>
-    </div>
-    <div class="card">
-      <span class="tag">ISSUE #9 · AI/ML</span>
-      <h2>Noisy Labels: HelpDeskNet-50K</h2>
-      <p>Why does a 50,000-ticket classifier plateau at 82%? Because the labels are noisy — and we quantified it: 15.0% crowd error (Wilson 95% CI [11.8%, 18.8%]), a real Tier A/B quality gap (z = 4.22, p ≈ 2.4×10⁻⁵), systematic Billing↔Refund confusion (43% of errors), and a true-accuracy ceiling of ~96% under uniform-flip assumptions. A simulation reproduces the 82%/96% split empirically, and the expert-review experiment shows combined scoring achieves <strong>98.5% review yield</strong> — 6.4× more error fixed per expert-hour than random selection.</p>
-      <div class="facts"><span>Wilson CIs</span><span>two-proportion z-test</span><span>98.5% review yield</span><span>82% noisy vs 96% gold</span></div>
-      <div class="plots">
-        <img src="../noisy-labels/plots/crowd_confusion.png" alt="Crowd label confusion heatmap">
-        <img src="../noisy-labels/plots/noise_by_tier.png" alt="Noise rate by tier">
-        <img src="../noisy-labels/plots/anusha_review_yield.png" alt="Review yield by strategy">
-        <img src="../noisy-labels/plots/robust_accuracy.png" alt="Robust method accuracy">
+
+  <div class="cursor" aria-hidden="true"><span class="cursor-label">[ VIEW ]</span></div>
+
+  <header class="nav">
+    <a class="nav-brand" href="#top">TEAM PLOT ARMOR</a>
+    <nav class="nav-links" aria-label="Chapters">
+      <a class="nav-lnk" href="#ch-01"><span>01 · Web/App</span><span class="nav-lnk-ghost" aria-hidden="true">01 · Web/App</span></a>
+      <a class="nav-lnk" href="#ch-02"><span>02 · DevOps</span><span class="nav-lnk-ghost" aria-hidden="true">02 · DevOps</span></a>
+      <a class="nav-lnk" href="#ch-03"><span>03 · AI/ML</span><span class="nav-lnk-ghost" aria-hidden="true">03 · AI/ML</span></a>
+    </nav>
+    <a class="btn" data-magnet data-view href="../reliefhub/">Open ReliefHub</a>
+  </header>
+
+  <main id="top" class="main">
+    <!-- hero — staged after the preloader -->
+    <section class="hero">
+      <p class="mono-label" data-hero>[ HacktoberFest 3.0 · AWS Cloud Club MUET · 2026 ]</p>
+      <h1 class="hero-title">
+        <span class="line"><span data-hero="line">Three problems.</span></span>
+        <span class="line"><span data-hero="line">One <span class="accent">relay</span>.</span></span>
+      </h1>
+      <p class="hero-sub" data-hero>Built collaboratively on a fork with per-member branches, reviewed
+        merges and a red→green security pipeline — Web/App, DevOps and AI/ML, delivered as one route.
+        Everything below is viewable in your browser right now.</p>
+      <div class="hero-ctas" data-hero>
+        <a class="btn" data-magnet data-view href="../reliefhub/">Open the ReliefHub live demo</a>
+        <a class="btn btn-ghost" data-magnet href="https://github.com/HussamHaroon/Plot-Armor">Repository</a>
+        <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor/actions">CI / Actions →</a>
       </div>
-      <p><a href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/analysis.py">analysis.py</a> · <a href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/simulate.py">simulate.py</a> · <a href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/review_sim.py">review_sim.py</a></p>
+      <div class="hero-route" aria-hidden="true">
+        <svg viewBox="0 0 1000 54" preserveAspectRatio="none" fill="none">
+          <line class="hr-base" x1="0" y1="16" x2="1000" y2="16" vector-effect="non-scaling-stroke"/>
+          <line class="hr-draw" x1="0" y1="16" x2="1000" y2="16" vector-effect="non-scaling-stroke"/>
+          <circle class="hr-dot" cx="0" cy="16" r="5"/>
+          <circle class="hr-dot" cx="500" cy="16" r="5"/>
+          <circle class="hr-dot" cx="1000" cy="16" r="5"/>
+          <text class="hr-label" x="0" y="44">Warehouse</text>
+          <text class="hr-label" x="500" y="44" text-anchor="middle">Dispatch</text>
+          <text class="hr-label" x="1000" y="44" text-anchor="end">Camp</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- the one marquee rail -->
+    <div class="marquee" aria-hidden="true">
+      <div class="mq-track" id="mq-track">
+        <span class="mq-item">8 camps across Sindh</span>
+        <span class="mq-item">48 findings caught</span>
+        <span class="mq-item">50,000 helpdesk tickets</span>
+        <span class="mq-item">98.5% review yield</span>
+        <span class="mq-item">red → green pipeline</span>
+        <span class="mq-item">3 problems · 1 relay</span>
+        <span class="mq-item">8 camps across Sindh</span>
+        <span class="mq-item">48 findings caught</span>
+        <span class="mq-item">50,000 helpdesk tickets</span>
+        <span class="mq-item">98.5% review yield</span>
+        <span class="mq-item">red → green pipeline</span>
+        <span class="mq-item">3 problems · 1 relay</span>
+      </div>
+    </div>
+
+    <!-- chapters 01/02/03 — sticky media, alternating registers, route line scrubs down -->
+    <div class="chapters" id="chapters">
+      <svg class="route-svg" aria-hidden="true" fill="none">
+        <path class="route-base" id="route-base"/>
+        <path class="route-draw" id="route-draw"/>
+        <g id="route-dots"></g>
+      </svg>
+
+      <!-- 01 · web/app · dark -->
+      <section class="chapter chapter--dark" id="ch-01">
+        <div class="chapter-grid">
+          <div class="chapter-media">
+            <div class="media-card" data-wipe data-view>
+              <img src="../reliefhub/assets/images/tents-aerial.jpg" alt="Aerial view of a flood relief camp" loading="lazy" decoding="async">
+            </div>
+            <p class="mono-label media-meta">[ Warehouse · ReliefHub · Sindh 2026 ]</p>
+          </div>
+          <div class="chapter-specs">
+            <p class="mono-label" data-reveal>[ 01 · Web/App ]</p>
+            <h2 data-reveal>ReliefHub — flood relief coordination</h2>
+            <p data-reveal>A full coordination platform for the Sindh flood response: a camp registry with
+              capacity auto-status, needs vs warehouse inventory with fulfilment tracking, dispatches with
+              strict stock-reservation rules validated end-to-end, donations, volunteer assignment, and a
+              KPI dashboard that surfaces critical gaps.</p>
+            <p data-reveal>Vanilla-JS module framework, role-based views, video banners, a landing page with
+              live stats — and a read-only demo mode whenever the API is asleep.</p>
+            <dl class="manifest" data-reveal>
+              <div class="man-row"><dt>Modules</dt><dd><span data-count="7">0</span></dd></div>
+              <div class="man-row"><dt>Milestones shipped</dt><dd><span data-count="6">0</span></dd></div>
+              <div class="man-row"><dt>Business rules</dt><dd>E2E-tested</dd></div>
+              <div class="man-row"><dt>No API?</dt><dd>Demo mode takes over</dd></div>
+            </dl>
+            <div class="chapter-ctas" data-reveal>
+              <a class="btn" data-magnet data-view href="../reliefhub/">Open the live demo</a>
+              <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor">Repository →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 · devops · light -->
+      <section class="chapter chapter--light chapter--flip" id="ch-02">
+        <div class="chapter-grid">
+          <div class="chapter-media">
+            <div class="media-card gate-card" data-wipe data-view>
+              <div class="gate">
+                <div class="gate-node gate-node--bad">
+                  <span class="gate-dot"></span>
+                  <span class="mono-label">Red · <span data-count="48">0</span> findings caught</span>
+                </div>
+                <div class="gate-line">
+                  <svg viewBox="0 0 40 120" fill="none" preserveAspectRatio="none">
+                    <line class="gl-bad" x1="20" y1="0" x2="20" y2="52" vector-effect="non-scaling-stroke"/>
+                    <line class="gl-good" x1="20" y1="68" x2="20" y2="120" vector-effect="non-scaling-stroke"/>
+                  </svg>
+                  <span class="gate-pill">[ GATE ]</span>
+                </div>
+                <div class="gate-node gate-node--ok">
+                  <span class="gate-dot"></span>
+                  <span class="mono-label">Green · 0 critical/high pass the gate</span>
+                </div>
+              </div>
+            </div>
+            <p class="mono-label media-meta">[ Checkpoint · Semgrep · npm audit · Gitleaks · Trivy ]</p>
+          </div>
+          <div class="chapter-specs">
+            <p class="mono-label" data-reveal>[ 02 · DevOps ]</p>
+            <h2 data-reveal>Automated security scanning in CI/CD</h2>
+            <p data-reveal>A DevSecOps pipeline scanning a sample Node/Express + Docker app with Semgrep
+              (hand-written rules), npm audit, Gitleaks and Trivy — image and filesystem — enforcing a
+              policy gate that fails builds on Critical/High findings and publishing a consolidated
+              dashboard.</p>
+            <p data-reveal>The Actions history tells the story: a <strong>red run that caught 48
+              findings</strong>, a remediation wave (env credentials, safe parser replacing
+              <code>eval</code>, parameterized queries, sha256, patched deps), then a <strong>green
+              run</strong> with documented base-image exceptions. The AWS extension (ECR + Inspector +
+              S3 via OIDC) is documented in <code>aws-deploy.example.yml</code>.</p>
+            <dl class="manifest" data-reveal>
+              <div class="man-row"><dt>Scan jobs + gate</dt><dd><span data-count="5">0</span> + 1</dd></div>
+              <div class="man-row"><dt>Evidence</dt><dd>red → green</dd></div>
+              <div class="man-row"><dt>Base-image exceptions</dt><dd>3, dated &amp; reviewed</dd></div>
+              <div class="man-row"><dt>AWS extension</dt><dd>OIDC → ECR · Inspector · S3</dd></div>
+            </dl>
+            <div class="chapter-ctas" data-reveal>
+              <a class="btn btn--ink" data-magnet data-view href="../secure-pipeline/reports/sample-dashboard.html">View the findings dashboard</a>
+              <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor/actions/workflows/security.yml">Pipeline runs →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 · ai/ml · dark -->
+      <section class="chapter chapter--dark" id="ch-03">
+        <div class="chapter-grid">
+          <div class="chapter-media">
+            <div class="media-card plot-grid" data-wipe>
+              <img src="../noisy-labels/plots/crowd_confusion.png" alt="Crowd label confusion heatmap" loading="lazy" decoding="async">
+              <img src="../noisy-labels/plots/noise_by_tier.png" alt="Noise rate by tier" loading="lazy" decoding="async">
+              <img src="../noisy-labels/plots/anusha_review_yield.png" alt="Review yield by strategy" loading="lazy" decoding="async">
+              <img src="../noisy-labels/plots/robust_accuracy.png" alt="Robust method accuracy" loading="lazy" decoding="async">
+            </div>
+            <p class="mono-label media-meta">[ Evidence · 4 plots · simulation + expert review ]</p>
+          </div>
+          <div class="chapter-specs">
+            <p class="mono-label" data-reveal>[ 03 · AI/ML ]</p>
+            <h2 data-reveal>Noisy Labels: HelpDeskNet-50K</h2>
+            <p data-reveal>Why does a 50,000-ticket classifier plateau at 82%? Because the labels are
+              noisy — and we quantified it: <strong>15.0% crowd error</strong> (Wilson 95% CI
+              [11.8%, 18.8%]), a real Tier A/B quality gap (z&nbsp;=&nbsp;4.22, p&nbsp;≈&nbsp;2.4×10⁻⁵),
+              systematic Billing↔Refund confusion (43% of errors), and a true-accuracy ceiling of
+              ~96% under uniform-flip assumptions.</p>
+            <p data-reveal>A simulation reproduces the 82%/96% split empirically, and the expert-review
+              experiment shows combined scoring achieves <strong>98.5% review yield</strong> — 6.4×
+              more error fixed per expert-hour than random selection.</p>
+            <dl class="manifest" data-reveal>
+              <div class="man-row"><dt>Review yield</dt><dd><span data-count="98.5" data-decimals="1">0</span>%</dd></div>
+              <div class="man-row"><dt>Crowd error</dt><dd>15.0% · Wilson CI</dd></div>
+              <div class="man-row"><dt>Statistical test</dt><dd>two-proportion z-test</dd></div>
+              <div class="man-row"><dt>Accuracy split</dt><dd>82% noisy vs 96% gold</dd></div>
+            </dl>
+            <div class="chapter-ctas plots-links" data-reveal>
+              <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/analysis.py">analysis.py →</a>
+              <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/simulate.py">simulate.py →</a>
+              <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/review_sim.py">review_sim.py →</a>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
-  <footer>Team Plot Armor — Hussam Haroon · Eshaal · Syeda Anusha Ali — branch <code>team-plot-armor</code>, submission via PR to the <code>submission</code> branch.</footer>
+
+  <!-- fixed under the page — the last checkpoint on the route -->
+  <footer class="site-foot">
+    <div class="foot-check"><span class="foot-dot"></span><span class="mono-label">[ Delivered · to the judges ]</span></div>
+    <p class="foot-big">Team Plot Armor</p>
+    <p class="foot-row">Hussam Haroon · Eshaal · Syeda Anusha Ali</p>
+    <p class="foot-row mono">branch team-plot-armor · submission via PR to the submission branch · HacktoberFest 3.0</p>
+    <div class="foot-links">
+      <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor">GitHub repository →</a>
+      <a class="lnk" href="https://github.com/HussamHaroon/Plot-Armor/actions">CI / Actions →</a>
+      <a class="lnk" href="../reliefhub/">ReliefHub demo →</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
+  <script src="main.js" defer></script>
 </body>
 </html>
