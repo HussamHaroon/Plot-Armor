@@ -52,6 +52,8 @@
 
     setupPreloader();
     setupMarquee();
+    setupRouteSpine();
+    setupChapters();
   }
 
   /* ---- 1. Preloader ritual: counter 000→100 + route line draw, ≤2.2s ---- */
@@ -110,6 +112,116 @@
     const tw = gsap.to(track, { xPercent: -50, ease: 'none', duration: 26, repeat: -1 });
     track.addEventListener('mouseenter', () => tw.pause());
     track.addEventListener('mouseleave', () => tw.play());
+  }
+
+  /* ---- 3. Route spine: one line scrubbing down through chapters 01→02→03 ---- */
+  function setupRouteSpine() {
+    const wrap = document.getElementById('chapters');
+    const svg = wrap ? wrap.querySelector('.route-svg') : null;
+    const base = document.getElementById('route-base');
+    const draw = document.getElementById('route-draw');
+    const dotsG = document.getElementById('route-dots');
+    if (!wrap || !svg || !base || !draw || !dotsG) return;
+
+    const chapters = gsap.utils.toArray('.chapter', wrap);
+    const NS = 'http://www.w3.org/2000/svg';
+    let triggers = [];
+
+    function build() {
+      triggers.forEach(t => {
+        if (t.scrollTrigger) t.scrollTrigger.kill();
+        if (t.kill) t.kill();
+      });
+      triggers = [];
+      dotsG.innerHTML = '';
+
+      const W = 60;
+      const H = wrap.offsetHeight;
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      const wrect = wrap.getBoundingClientRect();
+      const pts = chapters.map(ch => {
+        const r = ch.getBoundingClientRect();
+        return { x: W / 2, y: r.top - wrect.top + Math.min(r.height * 0.3, 240) };
+      });
+
+      let d = 'M ' + W / 2 + ' 0';
+      pts.forEach((p, i) => {
+        const prevY = i === 0 ? 0 : pts[i - 1].y;
+        const seg = p.y - prevY;
+        const c1 = W / 2 + (i % 2 ? 20 : -20);
+        const c2 = W / 2 + (i % 2 ? -20 : 20);
+        d += ' C ' + c1 + ' ' + (prevY + seg * 0.4) + ', ' + c2 + ' ' + (prevY + seg * 0.6) + ', ' + W / 2 + ' ' + p.y;
+      });
+      d += ' L ' + W / 2 + ' ' + H;
+      base.setAttribute('d', d);
+      draw.setAttribute('d', d);
+
+      const L = draw.getTotalLength();
+      gsap.set(draw, { strokeDasharray: L, strokeDashoffset: L });
+      triggers.push(gsap.to(draw, {
+        strokeDashoffset: 0, ease: 'none',
+        scrollTrigger: { trigger: wrap, start: 'top 65%', end: 'bottom 90%', scrub: 0.6 },
+      }));
+
+      pts.forEach((p, i) => {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', String(p.x));
+        c.setAttribute('cy', String(p.y));
+        c.setAttribute('r', '7');
+        c.setAttribute('class', 'route-dot');
+        dotsG.appendChild(c);
+        triggers.push(ScrollTrigger.create({
+          trigger: chapters[i], start: 'top 72%', once: true,
+          onEnter: () => gsap.to(c, { scale: 1, duration: 0.7, ease: 'expo.out' }),
+        }));
+      });
+    }
+
+    build();
+    let rT;
+    window.addEventListener('resize', () => {
+      clearTimeout(rT);
+      rT = setTimeout(build, 200);
+    });
+  }
+
+  /* ---- 4. Chapter reveals: staged text, clip-path wipes, count-ups, parallax ---- */
+  function setupChapters() {
+    ScrollTrigger.batch('[data-reveal]', {
+      start: 'top 86%', once: true,
+      onEnter: batch => gsap.to(batch, {
+        opacity: 1, y: 0, duration: 1.2, ease: 'expo.out', stagger: 0.09, overwrite: 'auto',
+      }),
+    });
+    ScrollTrigger.batch('[data-wipe]', {
+      start: 'top 82%', once: true,
+      onEnter: batch => gsap.to(batch, {
+        clipPath: 'inset(0 0 0% 0)', duration: 1.2, ease: 'expo.out', stagger: 0.12, overwrite: 'auto',
+      }),
+    });
+
+    gsap.utils.toArray('[data-count]').forEach(el => {
+      const target = parseFloat(el.dataset.count);
+      const dec = parseInt(el.dataset.decimals || '0', 10);
+      const obj = { v: 0 };
+      ScrollTrigger.create({
+        trigger: el, start: 'top 85%', once: true,
+        onEnter: () => gsap.to(obj, {
+          v: target, duration: 1.4, ease: 'expo.out',
+          onUpdate: () => { el.textContent = obj.v.toFixed(dec); },
+        }),
+      });
+    });
+
+    /* media drifts inside its card while the chapter passes (≤ 8% deltas) */
+    gsap.utils.toArray('.media-card img').forEach(img => {
+      gsap.fromTo(img, { yPercent: -3, scale: 1.08 }, {
+        yPercent: 3, scale: 1.08, ease: 'none',
+        scrollTrigger: {
+          trigger: img.closest('.chapter'), start: 'top bottom', end: 'bottom top', scrub: true,
+        },
+      });
+    });
   }
 
 })();
