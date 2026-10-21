@@ -2,7 +2,9 @@
    ReliefHub — design system
    One place to tune everything: tokens below drive type, spacing, radius,
    shadows, motion and semantic color across the whole app.
-   Fonts: Sora (display) + Inter (body), via Google Fonts CDN in index.html.
+   Fonts: Sora (display) + Instrument Sans (body) + JetBrains Mono (labels),
+   via Google Fonts CDN in index.html.
+   Motion: one house easing --ease (easeOutExpo), durations 200/400/700/1200ms.
    ========================================================================== */
 
 /* ---------- 1. Design tokens ---------- */
@@ -37,9 +39,12 @@
   --bad: #b91c1c;   --bad-soft: #fee2e2;
   --info: #1d4ed8;  --info-soft: #dbeafe;
 
-  /* Type — fluid scale + families */
+  /* Type — fluid scale + families
+     Display: Sora (identity) · Text: Instrument Sans · Mono accent: JetBrains Mono
+     (mono is reserved for bracketed micro-labels, index numbers and data captions) */
   --font-display: 'Sora', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Instrument Sans', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
   --fs-2xs: 0.6875rem;   /* 11px micro labels */
   --fs-xs: 0.75rem;      /* 12px captions   */
   --fs-sm: 0.8125rem;    /* 13px dense body */
@@ -48,6 +53,7 @@
   --fs-lg: 1.0625rem;    /* 17px            */
   --fs-xl: clamp(1.375rem, 1.15rem + 0.9vw, 1.75rem);   /* page title */
   --fs-2xl: clamp(1.625rem, 1.35rem + 1.3vw, 2.125rem); /* KPI value  */
+  --fs-display: clamp(2.25rem, 1.3rem + 4vw, 4.25rem);  /* landing hero display (≥4rem desktop) */
   --track-wide: 0.07em;
   --track-tight: -0.015em;
 
@@ -68,14 +74,14 @@
   --shadow-soft: var(--shadow-sm);
   --shadow-lift: var(--shadow-md);
 
-  /* Motion — one easing family for everything */
-  --dur-1: 120ms; --dur-2: 200ms; --dur-3: 320ms; --dur-4: 480ms;
-  --ease: cubic-bezier(.22, 1, .36, 1);
-  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  /* Motion — the one house easing (easeOutExpo) + a 4-step duration scale.
+     Every transition/animation in this file uses one of these four steps. */
+  --dur-1: 200ms; --dur-2: 400ms; --dur-3: 700ms; --dur-4: 1200ms;
+  --ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-spring: cubic-bezier(0.19, 1, 0.22, 1); /* unified with the house ease */
 
   /* Layout */
   --content-max: 1280px;
-  --sidebar-w: 248px;
 }
 
 /* ---------- 2. Base ---------- */
@@ -101,14 +107,16 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: var(--track-t
 :focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 2px; border-radius: 4px; }
 .topbar :focus-visible { outline-color: var(--brand-300); }
 
-/* Skip link — hidden until focused (a11y) */
+/* Skip link — hidden until focused (a11y); transform-based so nothing
+   layout-shaped ever animates */
 .skip-link {
-  position: absolute; left: 12px; top: -48px; z-index: 200;
+  position: absolute; left: 12px; top: 12px; z-index: 200;
   background: var(--brand-ink); color: #fff; font-size: var(--fs-sm); font-weight: 600;
   padding: 9px 16px; border-radius: var(--r-sm); text-decoration: none;
-  transition: top var(--dur-2) var(--ease);
+  transform: translateY(-64px);
+  transition: transform var(--dur-2) var(--ease);
 }
-.skip-link:focus { top: 12px; }
+.skip-link:focus { transform: translateY(0); }
 
 /* Slim brand-tinted scrollbars (blink/webkit + firefox) */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -707,7 +715,7 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
   transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
 }
 .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--brand-200); }
-.feature-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; transition: transform var(--dur-4) var(--ease); }
+.feature-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; transition: transform var(--dur-2) var(--ease); }
 .feature-card:hover .feature-img { transform: scale(1.045); }
 .feature-body { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
 .feature-body h3 { margin: 0 0 var(--sp-2); font-size: var(--fs-md); font-weight: 700; }
