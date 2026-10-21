@@ -57,7 +57,8 @@
       <span class="tag">ISSUE #2 · DEVOPS</span>
       <h2>Automated Security Scanning in CI/CD</h2>
       <p>A DevSecOps pipeline scanning a sample Node/Express + Docker app with Semgrep (hand-written rules), npm audit, Gitleaks and Trivy (image + filesystem), enforcing a policy gate that fails builds on Critical/High findings and publishing a consolidated dashboard. The Actions history shows the full story: a <strong>red run that caught 48 findings</strong>, a remediation wave (env credentials, safe parser replacing eval, parameterized queries, sha256, patched deps), then a <strong>green run</strong> with documented base-image exceptions. The AWS extension (ECR + Inspector + S3 via OIDC) is documented in <code>aws-deploy.example.yml</code>.</p>
-      <div class="facts"><span>5 scan jobs + gate</span><span>red → green evidence</span><span>48 findings caught</span><span>.trivyignore with review dates</span></div>
+      <div class="facts"><span>5 scan jobs + gate</span><span>red → green evidence</span><span>48 findings caught</span><span>fail-closed gate</span></div>
+      <p><a href="drill.html">▶ Watch the incident response drill →</a></p>
       <p><a href="../secure-pipeline/reports/sample-dashboard.html">View the security findings dashboard →</a> &nbsp;·&nbsp; <a href="https://github.com/HussamHaroon/Plot-Armor/actions/workflows/security.yml">Pipeline runs →</a></p>
     </div>
     <div class="card">

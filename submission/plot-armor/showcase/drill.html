@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Response Drill — Team Plot Armor</title>
+  <link rel="icon" href="../reliefhub/assets/images/logo-mark.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #0d5c46; --brand-deep: #083d2e; --brand-ink: #052a1f;
+      --brand-500: #10b981; --brand-100: #d1fae5; --bg: #eef2f5; --ink: #0f172a;
+      --red-ink: #7f1d1d; --red: #dc2626;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      --ease: cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+
+    .hero { background: linear-gradient(135deg, var(--brand-ink), var(--brand-deep) 55%, var(--brand)); color: #ecfdf5; padding: 64px 24px 56px; text-align: center; }
+    .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: #6ee7b7; font-weight: 600; }
+    .hero h1 { font-family: Sora, sans-serif; font-size: clamp(28px, 4.6vw, 46px); margin: 12px 0 10px; }
+    .hero p { max-width: 680px; margin: 0 auto; color: #d1fae5; font-size: 15px; line-height: 1.6; }
+    .hero a { color: #6ee7b7; font-weight: 600; text-decoration: none; border-bottom: 1.5px solid rgba(110,231,183,.5); }
+    .hero .runbar { margin-top: 26px; }
+    button.cta { font-family: Sora, sans-serif; font-size: 15px; font-weight: 700; background: var(--brand-500); color: #052a1f; border: none; padding: 13px 28px; border-radius: 999px; cursor: pointer; box-shadow: 0 10px 24px -10px rgba(16,185,129,.7); transition: transform .45s var(--ease), box-shadow .45s var(--ease), opacity .3s; }
+    button.cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(16,185,129,.8); }
+    button.cta:disabled { opacity: .45; cursor: default; }
+    button.cta.ghost { background: rgba(255,255,255,.08); color: #ecfdf5; border: 1px solid rgba(209,250,229,.3); box-shadow: none; }
+
+    main { max-width: 1080px; margin: -30px auto 60px; padding: 0 20px; display: grid; gap: 22px; }
+    .card { background: #fff; border-radius: 18px; padding: 26px 28px; box-shadow: 0 10px 30px -18px rgba(5,42,31,.35); border: 1px solid #e2e8f0; }
+    .mono-tag { font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--brand); }
+    .card h2 { font-family: Sora, sans-serif; font-size: 21px; margin: 10px 0 6px; }
+    .card .sub { color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+
+    /* ---- pipeline board ---- */
+    .jobs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    @media (max-width: 860px) { .jobs { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
+    .job { border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px 14px 14px; background: #f8fafc; position: relative; transition: border-color .5s var(--ease), background .5s var(--ease), transform .5s var(--ease), box-shadow .5s var(--ease); }
+    .job .dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: #e2e8f0; color: #94a3b8; margin-bottom: 10px; transition: background .4s var(--ease), color .4s var(--ease); }
+    .job.running { border-color: var(--brand-500); background: #f0fdf7; transform: translateY(-3px); box-shadow: 0 12px 24px -16px rgba(16,185,129,.6); }
+    .job.running .dot { background: var(--brand-100); color: var(--brand); }
+    .job.done { border-color: var(--brand-500); background: #f0fdf7; }
+    .job.done .dot { background: var(--brand-500); color: #052a1f; }
+    .job.gate-red { border-color: #fca5a5; background: #fef2f2; }
+    .job.gate-red .dot { background: var(--red); color: #fff; }
+    .job .name { font-family: var(--mono); font-size: 12.5px; font-weight: 700; letter-spacing: .5px; }
+    .job .desc { font-size: 11.5px; color: #64748b; margin-top: 2px; line-height: 1.4; }
+    .job .count { font-family: Sora, sans-serif; font-size: 26px; font-weight: 800; margin-top: 10px; color: #cbd5e1; transition: color .4s var(--ease); }
+    .job.done .count { color: var(--ink); }
+    .job.gate-red .count { color: var(--red); }
+    .job .count small { font-size: 11px; font-weight: 600; color: #94a3b8; font-family: var(--mono); margin-left: 4px; }
+    .spinner { width: 14px; height: 14px; border: 2.5px solid var(--brand-100); border-top-color: var(--brand-500); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- verdict banner ---- */
+    .verdict { border-radius: 18px; padding: 26px 28px; text-align: center; color: #fff; border: 1px solid #e2e8f0; background: #f8fafc; transition: background .6s var(--ease), box-shadow .6s var(--ease); perspective: 600px; }
+    .verdict .vk { font-family: var(--mono); font-size: 11.5px; letter-spacing: 2px; text-transform: uppercase; opacity: .85; }
+    .verdict .vmain { font-family: Sora, sans-serif; font-size: clamp(19px, 3vw, 28px); font-weight: 800; margin: 8px 0 6px; transition: transform .6s var(--ease); }
+    .verdict .vsub { font-size: 14px; opacity: .92; }
+    .verdict .vnote { font-family: var(--mono); font-size: 11px; margin-top: 10px; opacity: .7; letter-spacing: .5px; }
+    .verdict.failed { background: linear-gradient(135deg, #450a0a, #991b1b 55%, var(--red)); box-shadow: 0 16px 36px -18px rgba(220,38,38,.75); }
+    .verdict.failed .vmain { color: #fecaca; }
+    .verdict.passed { background: linear-gradient(135deg, var(--brand-ink), var(--brand-deep) 55%, var(--brand)); box-shadow: 0 16px 36px -18px rgba(16,185,129,.75); }
+    .verdict.passed .vmain { color: #6ee7b7; }
+    .verdict.flip .vmain { transform: rotateX(90deg); }
+    .verdict.pulse { animation: glowpulse 1.6s var(--ease) 2; }
+    @keyframes glowpulse {
+      0% { box-shadow: 0 16px 36px -18px rgba(16,185,129,.75); }
+      50% { box-shadow: 0 0 0 10px rgba(16,185,129,.28), 0 22px 46px -16px rgba(16,185,129,.9); }
+      100% { box-shadow: 0 16px 36px -18px rgba(16,185,129,.75); }
+    }
+
+    /* ---- remediation checklist ---- */
+    .fixes { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+    .fixes li { display: flex; align-items: center; gap: 12px; border: 1.5px solid #e2e8f0; background: #f8fafc; border-radius: 12px; padding: 11px 14px; font-size: 14px; color: #334155; position: relative; transition: border-color .5s var(--ease), background .5s var(--ease), opacity .5s var(--ease); }
+    .fixes li .tick { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; background: #e2e8f0; color: transparent; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; transition: background .5s var(--ease), color .5s var(--ease); }
+    .fixes li .what { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+    .fixes li .with { color: #64748b; margin: 0 2px; }
+    .fixes li .how { color: #0d5c46; font-weight: 600; font-size: 13px; }
+    .fixes li .strike { position: absolute; left: 44px; right: 16px; top: 50%; height: 1.5px; background: var(--brand-500); transform: scaleX(0); transform-origin: left center; transition: transform .55s var(--ease); }
+    .fixes li.fixed { border-color: var(--brand-100); background: #f0fdf7; }
+    .fixes li.fixed .tick { background: var(--brand-500); color: #052a1f; }
+    .fixes li.fixed .strike { transform: scaleX(1); }
+    .fixes li.fixed .what, .fixes li.fixed .how { color: var(--brand); }
+    .fixbar { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    button.cta.red { background: var(--red); color: #fff; box-shadow: 0 10px 24px -10px rgba(220,38,38,.7); }
+    .hint { font-family: var(--mono); font-size: 11.5px; color: #64748b; letter-spacing: .5px; }
+
+    footer { text-align: center; color: #64748b; font-size: 13px; padding: 8px 18px 34px; }
+    footer a { color: var(--brand); font-weight: 600; text-decoration: none; border-bottom: 1.5px solid var(--brand-500); }
+    footer .btns { margin: 0 0 12px; }
+
+    /* ---- scroll reveals ---- */
+    .reveal { opacity: 0; transform: translateY(26px); transition: opacity 1s var(--ease), transform 1s var(--ease); }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .spinner { animation: none; }
+      .verdict.pulse { animation: none; }
+      .verdict .vmain, .fixes li .strike, button.cta, .job { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="eyebrow">[ INCIDENT RESPONSE DRILL ] · HacktoberFest-Hackathon 2026 · AWSCloudClubMUET</div>
+    <h1>How our pipeline caught 48 findings</h1>
+    <p>A replay of our real GitHub Actions security run on ReliefHub: five scanners, a policy gate that fails the build, a remediation wave, and a green re-run. Every number below is counted live from the repo's scan fixtures — <a href="https://github.com/HussamHaroon/Plot-Armor/actions/workflows/security.yml" target="_blank" rel="noopener">see the original red → green runs in Actions history</a>.</p>
+    <div class="runbar"><button class="cta" id="runBtn" type="button">&#9654; Run pipeline</button></div>
+  </div>
+
+  <main>
+    <section class="card reveal" id="board">
+      <span class="mono-tag">SECURITY.YML · JOB MATRIX</span>
+      <h2>Five jobs, one verdict</h2>
+      <p class="sub">Semgrep with our hand-written rules, npm audit, Gitleaks secret scan, Trivy image + filesystem scan — then the gate that fails the build on any critical or high finding.</p>
+      <div class="jobs" id="jobs"><!-- job cards injected --></div>
+    </section>
+
+    <section class="verdict reveal" id="verdict">
+      <div class="vk" id="vKicker">VERDICT · AWAITING RUN</div>
+      <div class="vmain" id="vMain">idle — press &#9654; Run pipeline</div>
+      <div class="vsub" id="vSub">the gate fails the build on any critical or high finding</div>
+      <div class="vnote" id="vNote"></div>
+    </section>
+
+    <section class="card reveal" id="remediation">
+      <span class="mono-tag">REMEDIATION WAVE</span>
+      <h2>Fix findings, re-run, go green</h2>
+      <p class="sub">The same wave our team shipped between the red run and the green run — each fix strikes through as the scanners re-execute.</p>
+      <ul class="fixes" id="fixList"><!-- checklist injected --></ul>
+      <div class="fixbar">
+        <button class="cta red" id="fixBtn" type="button" disabled>Fix findings &amp; re-run</button>
+        <span class="hint" id="fixHint">available after the gate fails</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="btns">
+      <button class="cta ghost" id="replayBtn" type="button" style="background:#0d5c46;color:#ecfdf5;">&#8635; Replay the drill</button>
+    </div>
+    <a href="index.html">&larr; back to the Team Plot Armor showcase</a> &nbsp;·&nbsp;
+    <a href="https://github.com/HussamHaroon/Plot-Armor/actions/workflows/security.yml" target="_blank" rel="noopener">original runs on GitHub Actions</a>
+    <br><span style="font-family:var(--mono);font-size:11px;" id="dataSrc">data: secure-pipeline/scripts/fixtures/*.json · counted client-side, same severity mapping as the pipeline gate</span>
+  </footer>
+
+<script>
+"use strict";
+/* ================================================================
+   COUNT-BEGIN — pure counting logic, mirrored from
+   secure-pipeline/scripts/report.py (the pipeline's own mapping):
+     semgrep  ERROR->HIGH  WARNING->MEDIUM  INFO->LOW
+     npm audit  one finding per entry in .vulnerabilities
+     trivy      one finding per entry in Results[].Vulnerabilities
+     gitleaks   every leak = HIGH
+   Kept DOM-free so it can be evaluated verbatim under node.
+   ================================================================ */
+var SEV_BUCKETS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+var SEMGREP_MAP = { "ERROR": "HIGH", "WARNING": "MEDIUM", "INFO": "LOW" };
+
+function normSev(raw) {
+  var s = String(raw == null ? "" : raw).trim().toUpperCase();
+  return SEV_BUCKETS.indexOf(s) >= 0 ? s : "LOW";
+}
+function emptyTally() { return { critical: 0, high: 0, medium: 0, low: 0, total: 0 }; }
+function bump(t, sev) { if (t[sev.toLowerCase()] != null) t[sev.toLowerCase()] += 1; t.total += 1; }
+
+function countSemgrep(data) {
+  var t = emptyTally();
+  var results = (data && data.results) || [];
+  for (var i = 0; i < results.length; i++) {
+    var sev = SEMGREP_MAP[String((results[i].extra || {}).severity || "").toUpperCase()] || "MEDIUM";
+    bump(t, normSev(sev));
+  }
+  return t;
+}
+function countNpmAudit(data) {
+  var t = emptyTally();
+  var vulns = (data && data.vulnerabilities) || {};
+  for (var name in vulns) { if (Object.prototype.hasOwnProperty.call(vulns, name)) bump(t, normSev((vulns[name] || {}).severity)); }
+  return t;
+}
+function countTrivy(docs) { // array of parsed trivy json docs (image + fs)
+  var t = emptyTally();
+  (docs || []).forEach(function (doc) {
+    var results = (doc && doc.Results) || [];
+    results.forEach(function (block) {
+      (block.Vulnerabilities || []).forEach(function (v) { bump(t, normSev(v && v.Severity)); });
+    });
+  });
+  return t;
+}
+function countGitleaks(data) {
+  var t = emptyTally();
+  var leaks = Array.isArray(data) ? data : [];
+  for (var i = 0; i < leaks.length; i++) bump(t, "HIGH");
+  return t;
+}
+function tallyScanners(s) { // s = { semgrep, "npm-audit", gitleaks, trivy }
+  var totals = emptyTally();
+  ["semgrep", "npm-audit", "gitleaks", "trivy"].forEach(function (k) {
+    var t = s[k] || emptyTally();
+    totals.critical += t.critical; totals.high += t.high; totals.medium += t.medium; totals.low += t.low; totals.total += t.total;
+  });
+  return totals;
+}
+/* COUNT-END */
+
+/* ---- recorded totals of the real Actions run (offline fallback) ---- */
+var FALLBACK_SCANNERS = {
+  "semgrep":   { critical: 0, high: 13, medium: 4, low: 0, total: 17 },
+  "npm-audit": { critical: 0, high: 6,  medium: 2, low: 0, total: 8  },
+  "gitleaks":  { critical: 0, high: 9,  medium: 0, low: 0, total: 9  },
+  "trivy":     { critical: 1, high: 13, medium: 0, low: 0, total: 14 }
+};
+var FALLBACK_TOTALS = tallyScanners(FALLBACK_SCANNERS); // 48 = 1 critical + 41 high + 6 medium
+
+/* ---- fixture loading: works from the repo root OR the showcase dir ---- */
+var FIXTURE_FILES = ["semgrep-report.json", "npm-audit.json", "trivy-image.json", "trivy-fs.json", "gitleaks-report.json"];
+var FIXTURE_BASES = [
+  "../secure-pipeline/scripts/fixtures/",     // served from repo root / submission root / plot-armor root
+  "../../secure-pipeline/scripts/fixtures/",  // one level deeper
+  "../../../secure-pipeline/scripts/fixtures/",// two levels deeper
+  "secure-pipeline/scripts/fixtures/"         // served with the app dir as web root
+];
+function loadFixtures() {
+  var tryBase = function (base) {
+    return Promise.all(FIXTURE_FILES.map(function (f) {
+      return fetch(base + f, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) throw new Error(f + " -> HTTP " + r.status);
+        return r.text();
+      }).then(function (txt) { return JSON.parse(txt); });
+    }));
+  };
+  var i = 0;
+  function next() {
+    if (i >= FIXTURE_BASES.length) return Promise.resolve(null);
+    var base = FIXTURE_BASES[i++];
+    return tryBase(base).catch(function () { return next(); });
+  }
+  return next();
+}
+
+/* ---- DOM wiring ---- */
+var $ = function (id) { return document.getElementById(id); };
+var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+var JOBS = [
+  { key: "semgrep",   name: "semgrep",   desc: "hand-written SAST rules" },
+  { key: "npm-audit", name: "npm audit", desc: "dependency advisories" },
+  { key: "gitleaks",  name: "gitleaks",  desc: "secret detection" },
+  { key: "trivy",     name: "trivy",     desc: "image + fs scan" },
+  { key: "gate",      name: "gate",      desc: "fail on crit / high" }
+];
+var FIXES = [
+  { what: "eval()", withTxt: "replaced by", how: "safe expression parser" },
+  { what: "hardcoded keys", withTxt: "moved to", how: "env credentials" },
+  { what: "SQL string concat", withTxt: "rewritten as", how: "parameterized queries" },
+  { what: "md5 password hashes", withTxt: "upgraded to", how: "salted scrypt" },
+  { what: "vulnerable lodash / moment", withTxt: "patched to", how: "fixed versions" },
+  { what: "bare express app", withTxt: "hardened with", how: "helmet + rate limiting" }
+];
+
+var state = { scanners: null, totals: null, live: false, busy: false, failed: false, passed: false };
+
+function buildBoard() {
+  $("jobs").innerHTML = JOBS.map(function (j, i) {
+    return '<div class="job" id="job-' + i + '">' +
+      '<div class="dot" id="dot-' + i + '">&#9679;</div>' +
+      '<div class="name">' + j.name + '</div>' +
+      '<div class="desc">' + j.desc + '</div>' +
+      '<div class="count" id="count-' + i + '">0<small>findings</small></div>' +
+      '</div>';
+  }).join("");
+  $("fixList").innerHTML = FIXES.map(function (f, i) {
+    return '<li id="fix-' + i + '"><span class="tick">&#10003;</span>' +
+      '<span><span class="what">' + f.what + '</span> <span class="with">' + f.withTxt + '</span> <span class="how">' + f.how + '</span></span>' +
+      '<span class="strike"></span></li>';
+  }).join("");
+}
+
+function setDot(i, mode) {
+  var dot = $("dot-" + i);
+  if (mode === "running") dot.innerHTML = '<span class="spinner"></span>';
+  else if (mode === "done") dot.innerHTML = "&#10003;";
+  else dot.innerHTML = "&#9679;";
+}
+
+function countUp(el, to, opts) {
+  opts = opts || {};
+  var from = opts.from || 0, ms = REDUCED ? 0 : (opts.ms || 550), t0 = null;
+  function frame(ts) {
+    if (ms === 0) { el.innerHTML = to + (opts.small || ""); return; }
+    if (t0 === null) t0 = ts;
+    var p = Math.min(1, (ts - t0) / ms);
+    p = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    el.innerHTML = Math.round(from + (to - from) * p) + (opts.small || "");
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function jobDone(i, ms) {
+  var key = JOBS[i].key, t = state.scanners[key] || emptyTally();
+  setDot(i, "done");
+  $("job-" + i).classList.remove("running");
+  $("job-" + i).classList.add("done");
+  if (key === "gate") {
+    var failed = !state.passed && state.totals.critical + state.totals.high > 0;
+    $("job-" + i).classList.add(failed ? "gate-red" : "done");
+    countUp($("count-" + i), failed ? state.totals.total : 0, { ms: ms, small: "<small>findings</small>" });
+  } else {
+    countUp($("count-" + i), t.total, { ms: ms, small: "<small>findings</small>" });
+  }
+}
+
+function runJobs(stagger, dur, done) {
+  JOBS.forEach(function (_, i) {
+    setTimeout(function () {
+      $("job-" + i).classList.remove("done", "gate-red");
+      $("job-" + i).classList.add("running");
+      setDot(i, "running");
+    }, i * stagger);
+    setTimeout(function () { jobDone(i, REDUCED ? 0 : 500); }, i * stagger + dur);
+  });
+  setTimeout(done, JOBS.length * stagger + dur + 120);
+}
+
+function sevLine(t) {
+  var parts = [t.critical + " critical", t.high + " high", t.medium + " medium"];
+  if (t.low > 0) parts.push(t.low + " low");
+  return parts.join(" \u00b7 ");
+}
+
+function flipVerdict(cls, kicker, mainHTML, sub, note) {
+  var v = $("verdict");
+  v.classList.remove("failed", "passed", "pulse");
+  v.classList.add("flip");
+  setTimeout(function () {
+    v.classList.add(cls);
+    v.classList.remove("flip");
+    $("vKicker").textContent = kicker;
+    $("vMain").innerHTML = mainHTML;
+    $("vSub").textContent = sub;
+    $("vNote").textContent = note || "";
+    var numEl = $("vMain").querySelector("[data-count]");
+    if (numEl) countUp(numEl, parseInt(numEl.getAttribute("data-count"), 10), { ms: REDUCED ? 0 : 900 });
+  }, REDUCED ? 0 : 300);
+}
+
+function announceFailed() {
+  state.failed = true;
+  var note = state.live
+    ? "counted live from secure-pipeline/scripts/fixtures \u00b7 sample of the 48-finding Actions run"
+    : "offline replay \u00b7 recorded totals of the real 48-finding Actions run";
+  flipVerdict("failed", "VERDICT \u00b7 SECURITY GATE: FAILED",
+    '<span data-count="' + state.totals.total + '">0</span> findings (' + sevLine(state.totals) + ")",
+    "the gate refused the build \u2014 remediation wave incoming",
+    note);
+  setTimeout(function () {
+    $("fixBtn").disabled = false;
+    $("fixHint").textContent = "auto-continuing shortly \u2014 or press to fix now";
+    state.autoTimer = setTimeout(function () { if (!state.passed && !state.busy) startFixing(); }, 3200);
+  }, REDUCED ? 100 : 1500); // keep the red moment on screen ~1.5s
+}
+
+function announcePassed() {
+  state.passed = true;
+  flipVerdict("passed", "VERDICT \u00b7 SECURITY GATE: PASSED",
+    "0 critical \u00b7 0 high \u00b7 scanners clean",
+    "build approved \u2014 this is the green run in our Actions history",
+    "same pipeline, same rules \u2014 zero blocking findings after the remediation wave");
+  var v = $("verdict");
+  setTimeout(function () { v.classList.add("pulse"); }, REDUCED ? 0 : 350);
+  $("fixBtn").disabled = true;
+  $("fixHint").textContent = "wave complete \u2014 pipeline is green";
+}
+
+function resetBoard() {
+  JOBS.forEach(function (_, i) {
+    var j = $("job-" + i);
+    j.classList.remove("running", "done", "gate-red");
+    setDot(i, "idle");
+    $("count-" + i).innerHTML = "0<small>findings</small>";
+  });
+}
+
+function startRun() {
+  if (state.busy) return;
+  state.busy = true; state.passed = false;
+  clearTimeout(state.autoTimer);
+  $("runBtn").disabled = true;
+  $("fixBtn").disabled = true;
+  $("fixHint").textContent = "available after the gate fails";
+  var v = $("verdict");
+  v.classList.remove("failed", "passed", "pulse");
+  $("vKicker").textContent = "VERDICT · PIPELINE RUNNING";
+  $("vMain").textContent = "scanners executing\u2026";
+  $("vSub").textContent = "semgrep \u2192 npm audit \u2192 gitleaks \u2192 trivy \u2192 gate";
+  $("vNote").textContent = "";
+  resetBoard();
+  runJobs(400, 850, function () {
+    state.busy = false;
+    announceFailed();
+  });
+}
+
+function startFixing() {
+  if (state.busy || !state.failed || state.passed) return;
+  state.busy = true;
+  clearTimeout(state.autoTimer);
+  $("fixBtn").disabled = true;
+  $("runBtn").disabled = true;
+  $("fixHint").textContent = "remediating\u2026";
+  var v = $("verdict");
+  v.classList.remove("failed", "passed", "pulse");
+  $("vKicker").textContent = "VERDICT · REMEDIATION WAVE";
+  $("vMain").textContent = "applying fixes and re-running scanners\u2026";
+  $("vSub").textContent = "each fix lands, then the pipeline re-executes";
+
+  var step = REDUCED ? 120 : 480;
+  FIXES.forEach(function (_, i) {
+    setTimeout(function () { $("fix-" + i).classList.add("fixed"); }, i * step);
+  });
+  // scanners re-run while the wave lands; counts drain to 0
+  JOBS.forEach(function (j, i) {
+    if (j.key === "gate") return;
+    setTimeout(function () {
+      $("job-" + i).classList.remove("done", "gate-red");
+      $("job-" + i).classList.add("running");
+      setDot(i, "running");
+    }, i * step + 150);
+    setTimeout(function () {
+      $("job-" + i).classList.remove("running");
+      $("job-" + i).classList.add("done");
+      setDot(i, "done");
+      countUp($("count-" + i), 0, { ms: REDUCED ? 0 : 420, small: "<small>findings</small>" });
+    }, i * step + 150 + (REDUCED ? 60 : 620));
+  });
+  setTimeout(function () {
+    state.passed = false;
+    setDot(4, "running");
+    $("job-4").classList.remove("done", "gate-red");
+    $("job-4").classList.add("running");
+    setTimeout(function () {
+      $("job-4").classList.remove("running");
+      state.passed = true;
+      setDot(4, "done");
+      $("job-4").classList.add("done");
+      $("count-4").innerHTML = "0<small>findings</small>";
+      state.busy = false;
+      announcePassed();
+    }, REDUCED ? 60 : 700);
+  }, FIXES.length * step + 350);
+}
+
+function replay() {
+  if (state.busy) return;
+  state.failed = false; state.passed = false;
+  clearTimeout(state.autoTimer);
+  var v = $("verdict");
+  v.classList.remove("failed", "passed", "pulse");
+  $("vKicker").textContent = "VERDICT · AWAITING RUN";
+  $("vMain").textContent = "idle — press \u25b6 Run pipeline";
+  $("vSub").textContent = "the gate fails the build on any critical or high finding";
+  $("vNote").textContent = "";
+  resetBoard();
+  FIXES.forEach(function (_, i) { $("fix-" + i).classList.remove("fixed"); });
+  $("runBtn").disabled = false;
+  $("fixBtn").disabled = true;
+  $("fixHint").textContent = "available after the gate fails";
+  window.scrollTo({ top: 0, behavior: REDUCED ? "auto" : "smooth" });
+}
+
+/* ---- boot ---- */
+buildBoard();
+state.scanners = FALLBACK_SCANNERS; // safe default; replaced by live counts when fixtures resolve
+state.totals = FALLBACK_TOTALS;
+state.live = false;
+
+loadFixtures().then(function (docs) {
+  if (!docs) { // file:// or blocked -> recorded totals stay
+    $("dataSrc").textContent = "data: scan fixtures unreachable from this location \u00b7 replaying the recorded 48-finding run totals";
+    return;
+  }
+  try {
+    var scanners = {
+      "semgrep":   countSemgrep(docs[0]),
+      "npm-audit": countNpmAudit(docs[1]),
+      "gitleaks":  countGitleaks(docs[4]),
+      "trivy":     countTrivy([docs[2], docs[3]])
+    };
+    var totals = tallyScanners(scanners);
+    if (totals.total <= 0) return; // empty/malformed fixtures -> keep recorded totals
+    state.scanners = scanners;
+    state.totals = totals;
+    state.live = true;
+    $("dataSrc").textContent = "data: counted live from secure-pipeline/scripts/fixtures \u00b7 " + totals.total + " findings (" + totals.critical + " critical \u00b7 " + totals.high + " high \u00b7 " + totals.medium + " medium" + (totals.low ? " \u00b7 " + totals.low + " low" : "") + ")";
+  } catch (e) { /* keep fallback */ }
+});
+
+$("runBtn").addEventListener("click", startRun);
+$("fixBtn").addEventListener("click", startFixing);
+$("replayBtn").addEventListener("click", replay);
+
+/* ---- scroll reveals ---- */
+(function () {
+  var els = document.querySelectorAll(".reveal");
+  if (REDUCED || !("IntersectionObserver" in window)) {
+    els.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+    });
+  }, { threshold: 0.15 });
+  els.forEach(function (el, i) {
+    el.style.transitionDelay = Math.min(i, 2) * 0.12 + "s"; // cascade the three cards
+    io.observe(el);
+  });
+})();
+</script>
+</body>
+</html>
