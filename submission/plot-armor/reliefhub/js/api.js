@@ -19,6 +19,16 @@ const API = {
         body: body ? JSON.stringify(body) : undefined,
       });
     } catch (networkErr) {
+      /* free-tier hosts sleep when idle - first request wakes them (10-30s).
+       * retry once before giving up, then fall back to bundled demo data. */
+      if (method === 'GET' && !this._wokeRetry) {
+        this._wokeRetry = true;
+        if (typeof UI !== 'undefined' && UI.toast) {
+          UI.toast('API is waking up, trying again in a few seconds…', 'info');
+        }
+        await new Promise(r => setTimeout(r, 9000));
+        return this.request(method, path, body);
+      }
       /* server unreachable -> switch to bundled demo data for reads */
       if (method === 'GET') {
         this._demoMode = true;

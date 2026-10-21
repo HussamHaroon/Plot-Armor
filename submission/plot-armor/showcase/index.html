@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Plot Armor — HacktoberFest Hackathon 2026</title>
+  <link rel="icon" href="../reliefhub/assets/images/logo-mark.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #0d5c46; --brand-deep: #083d2e; --brand-ink: #052a1f;
+      --brand-500: #10b981; --brand-100: #d1fae5; --bg: #eef2f5; --ink: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+    .hero { background: linear-gradient(135deg, var(--brand-ink), var(--brand-deep) 55%, var(--brand)); color: #ecfdf5; padding: 72px 24px 60px; text-align: center; }
+    .eyebrow { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: #6ee7b7; font-weight: 600; }
+    .hero h1 { font-family: Sora, sans-serif; font-size: clamp(30px, 5vw, 48px); margin: 12px 0 10px; }
+    .hero p { max-width: 640px; margin: 0 auto; color: #d1fae5; font-size: 15.5px; line-height: 1.6; }
+    .hero .links { margin-top: 26px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hero a.btn { background: var(--brand-500); color: #052a1f; font-weight: 700; padding: 11px 22px; border-radius: 999px; text-decoration: none; font-size: 14px; }
+    .hero a.btn.ghost { background: rgba(255,255,255,.08); color: #ecfdf5; border: 1px solid rgba(209,250,229,.3); }
+    main { max-width: 1080px; margin: -28px auto 60px; padding: 0 20px; display: grid; gap: 22px; }
+    .card { background: #fff; border-radius: 18px; padding: 26px 28px; box-shadow: 0 10px 30px -18px rgba(5,42,31,.35); border: 1px solid #e2e8f0; }
+    .card .tag { display: inline-block; background: var(--brand-100); color: var(--brand); font-size: 11.5px; font-weight: 700; padding: 4px 12px; border-radius: 999px; letter-spacing: .5px; }
+    .card h2 { font-family: Sora, sans-serif; font-size: 21px; margin: 12px 0 6px; }
+    .card p { color: #334155; font-size: 14.5px; line-height: 1.65; margin: 0 0 14px; }
+    .card a { color: var(--brand); font-weight: 600; text-decoration: none; border-bottom: 1.5px solid var(--brand-500); }
+    .facts { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+    .facts span { background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 12.5px; padding: 6px 12px; border-radius: 999px; color: #334155; }
+    .plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 6px 0 14px; }
+    .plots img { width: 100%; border-radius: 12px; border: 1px solid #e2e8f0; }
+    footer { text-align: center; color: #64748b; font-size: 13px; padding: 18px; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="eyebrow">HacktoberFest-Hackathon 2026 · AWSCloudClubMUET</div>
+    <h1>Team Plot Armor</h1>
+    <p>Three problems solved across Web/App, DevOps and AI/ML — built collaboratively on a fork with per-member branches, reviewed merges, and a red→green security pipeline. Everything below is viewable in your browser right now.</p>
+    <div class="links">
+      <a class="btn" href="../reliefhub/">🚀 Open ReliefHub live demo</a>
+      <a class="btn ghost" href="https://github.com/HussamHaroon/Plot-Armor">Repository</a>
+      <a class="btn ghost" href="https://github.com/HussamHaroon/Plot-Armor/actions">CI / Actions</a>
+    </div>
+  </div>
+  <main>
+    <div class="card">
+      <span class="tag">ISSUE #10 · WEB/APP</span>
+      <h2>ReliefHub — Flood Relief Coordination Dashboard</h2>
+      <p>Full coordination platform for Sindh flood response: camp registry with capacity auto-status, needs vs warehouse inventory with fulfilment tracking, dispatches with strict stock-reservation rules (validated end-to-end), donations, volunteer assignment, and a KPI dashboard that surfaces critical gaps. Vanilla-JS module framework, role-based views, video banners, landing page with live stats, and a read-only demo mode when no API is running.</p>
+      <div class="facts"><span>7 modules</span><span>6 milestones</span><span>E2E-tested business rules</span><span>demo-mode deployment</span></div>
+      <p><a href="../reliefhub/">Open the live demo →</a></p>
+    </div>
+    <div class="card">
+      <span class="tag">ISSUE #2 · DEVOPS</span>
+      <h2>Automated Security Scanning in CI/CD</h2>
+      <p>A DevSecOps pipeline scanning a sample Node/Express + Docker app with Semgrep (hand-written rules), npm audit, Gitleaks and Trivy (image + filesystem), enforcing a policy gate that fails builds on Critical/High findings and publishing a consolidated dashboard. The Actions history shows the full story: a <strong>red run that caught 48 findings</strong>, a remediation wave (env credentials, safe parser replacing eval, parameterized queries, sha256, patched deps), then a <strong>green run</strong> with documented base-image exceptions. The AWS extension (ECR + Inspector + S3 via OIDC) is documented in <code>aws-deploy.example.yml</code>.</p>
+      <div class="facts"><span>5 scan jobs + gate</span><span>red → green evidence</span><span>48 findings caught</span><span>.trivyignore with review dates</span></div>
+      <p><a href="../secure-pipeline/reports/sample-dashboard.html">View the security findings dashboard →</a> &nbsp;·&nbsp; <a href="https://github.com/HussamHaroon/Plot-Armor/actions/workflows/security.yml">Pipeline runs →</a></p>
+    </div>
+    <div class="card">
+      <span class="tag">ISSUE #9 · AI/ML</span>
+      <h2>Noisy Labels: HelpDeskNet-50K</h2>
+      <p>Why does a 50,000-ticket classifier plateau at 82%? Because the labels are noisy — and we quantified it: 15.0% crowd error (Wilson 95% CI [11.8%, 18.8%]), a real Tier A/B quality gap (z = 4.22, p ≈ 2.4×10⁻⁵), systematic Billing↔Refund confusion (43% of errors), and a true-accuracy ceiling of ~96% under uniform-flip assumptions. A simulation reproduces the 82%/96% split empirically, and the expert-review experiment shows combined scoring achieves <strong>98.5% review yield</strong> — 6.4× more error fixed per expert-hour than random selection.</p>
+      <div class="facts"><span>Wilson CIs</span><span>two-proportion z-test</span><span>98.5% review yield</span><span>82% noisy vs 96% gold</span></div>
+      <div class="plots">
+        <img src="../noisy-labels/plots/crowd_confusion.png" alt="Crowd label confusion heatmap">
+        <img src="../noisy-labels/plots/noise_by_tier.png" alt="Noise rate by tier">
+        <img src="../noisy-labels/plots/anusha_review_yield.png" alt="Review yield by strategy">
+        <img src="../noisy-labels/plots/robust_accuracy.png" alt="Robust method accuracy">
+      </div>
+      <p><a href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/analysis.py">analysis.py</a> · <a href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/simulate.py">simulate.py</a> · <a href="https://github.com/HussamHaroon/Plot-Armor/blob/main/submission/plot-armor/noisy-labels/review_sim.py">review_sim.py</a></p>
+    </div>
+  </main>
+  <footer>Team Plot Armor — Hussam Haroon · Eshaal · Syeda Anusha Ali — branch <code>team-plot-armor</code>, submission via PR to the <code>submission</code> branch.</footer>
+</body>
+</html>
