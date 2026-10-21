@@ -18,7 +18,10 @@ const UI = {
 
   /* Table renderer. columns: [{key, label, render?(row)}] */
   table(columns, rows, emptyText = 'No records found.') {
-    if (!rows.length) return this.h('p', { class: 'empty' }, emptyText);
+    if (!rows.length) return this.h('div', { class: 'empty' }, [
+      this.h('div', { class: 'empty-art', 'aria-hidden': 'true' }), /* CSS mounts the illustration */
+      this.h('p', { class: 'empty-text' }, emptyText),
+    ]);
     const thead = this.h('thead', {}, this.h('tr', {}, columns.map(c => this.h('th', {}, c.label))));
     const tbody = this.h('tbody', {}, rows.map(r => this.h('tr', {},
       columns.map(c => this.h('td', {}, c.render ? c.render(r) : (r[c.key] ?? ''))))));
@@ -65,7 +68,7 @@ const UI = {
   },
 
   toast(message, type = 'info') {
-    const t = this.h('div', { class: `toast toast-${type}` }, message);
+    const t = this.h('div', { class: `toast toast-${type}`, role: 'status' }, message);
     document.body.append(t);
     setTimeout(() => t.remove(), 3200);
   },

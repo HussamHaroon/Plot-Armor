@@ -1,4 +1,5 @@
-/* ReliefHub app core: module registry, hash router, role management. Owned by Team Lead. */
+/* ReliefHub app core: module registry, hash router, role management, landing page.
+ * Owned by Team Lead; design pass (icons, skeletons, landing, scroll FX) by Eshaal. */
 /* Hero media per module — videos on most pages, a photo on inventory.
  * If an asset 404s the banner removes itself so the page never looks broken. */
 const BANNERS = {
@@ -11,10 +12,33 @@ const BANNERS = {
   inventory:  { kind: 'image', src: 'assets/images/supply-boxes.jpg',      caption: 'Supplies counted, packed and ready' },
 };
 
+/* One consistent inline-SVG icon set (18px, stroke style) for the nav — no emoji.
+ * Falls back to the module's own icon if a module isn't covered here. */
+const ICONS = {
+  home: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/><path d='M9 22V12h6v10'/></svg>",
+  dashboard: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 20V10M12 20V4M6 20v-6'/></svg>",
+  camps: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21 12 4l9 17z'/><path d='M12 21v-5'/></svg>",
+  inventory: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/><path d='M3.27 6.96 12 12.01l8.73-5.05'/><path d='M12 22.08V12'/></svg>",
+  needs: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/><path d='M9 12h6M9 16h4'/></svg>",
+  dispatches: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='1' y='3' width='15' height='13' rx='1'/><path d='M16 8h4l3 3v5h-7V8z'/><circle cx='5.5' cy='18.5' r='2.5'/><circle cx='18.5' cy='18.5' r='2.5'/></svg>",
+  donations: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>",
+  volunteers: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg>",
+};
+
+function svgIcon(html) {
+  const span = document.createElement('span');
+  span.className = 'nav-ico';
+  span.innerHTML = html;
+  return span;
+}
+
 const App = {
   modules: [],
   state: { role: localStorage.getItem('rh_role') || 'coordinator' },
   _renderSeq: 0,
+  _revealIO: null,
+  _progressBar: null,
+  _fxQueued: false,
 
   registerModule(mod) {
     this.modules.push(mod);
@@ -36,10 +60,13 @@ const App = {
     const nav = document.getElementById('main-nav');
     nav.innerHTML = '';
     for (const m of this.modules) {
+      const ico = ICONS[m.id]
+        ? svgIcon(ICONS[m.id])
+        : (m.icon ? UI.h('span', { class: 'nav-ico' }, m.icon) : null);
       nav.append(UI.h('a', {
         class: 'nav-item' + (this.current === m.id ? ' active' : ''),
         href: '#/' + m.id,
-      }, [m.icon ? UI.h('span', { class: 'nav-ico' }, m.icon) : null, m.title]));
+      }, [ico, m.title]));
     }
   },
 
@@ -68,23 +95,113 @@ const App = {
     return banner;
   },
 
+  /* Skeleton shown in the view while a module's async render is in flight. */
+  buildSkeleton() {
+    return UI.h('div', { class: 'view-skeleton', 'aria-hidden': 'true' }, [
+      UI.h('div', { class: 'skel-kpis' },
+        Array.from({ length: 4 }, () => UI.h('div', { class: 'skel skel-card' }))),
+      UI.h('div', { class: 'skel skel-table' }),
+    ]);
+  },
+
+  /* Tags KPI cards with data-kpi so CSS can mount the right icon chip per metric. */
+  decorateKpis(root) {
+    const map = [
+      [/camp/i, 'camps'], [/famil|shelter/i, 'families'], [/fulfil/i, 'fulfilment'],
+      [/stock|inventory|item/i, 'stock'], [/volunteer/i, 'volunteers'],
+      [/cash|zakat|sponsor|general/i, 'cash'], [/in-kind|kind/i, 'inkind'],
+    ];
+    root.querySelectorAll('.card').forEach(card => {
+      const label = (card.querySelector('.card-label') || {}).textContent || '';
+      for (const [re, kpi] of map) {
+        if (re.test(label)) { card.dataset.kpi = kpi; return; }
+      }
+      card.dataset.kpi = 'activity';
+    });
+  },
+
+  /* Fade+slide reveal for .reveal elements once they enter the viewport. */
+  observeReveals(root) {
+    if (this._revealIO) this._revealIO.disconnect();
+    const els = root.querySelectorAll('.reveal');
+    if (!els.length) return;
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(el => el.classList.add('revealed'));
+      return;
+    }
+    this._revealIO = new IntersectionObserver(entries => {
+      for (const en of entries) {
+        if (en.isIntersecting) {
+          en.target.classList.add('revealed');
+          this._revealIO.unobserve(en.target);
+        }
+      }
+    }, { threshold: 0.15, rootMargin: '0px 0px -36px 0px' });
+    els.forEach(el => this._revealIO.observe(el));
+  },
+
+  _reduceMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  },
+
+  /* One rAF-throttled scroll pass: top progress bar, banner parallax, hero depth. */
+  _scrollFX() {
+    const doc = document.documentElement;
+    const max = doc.scrollHeight - window.innerHeight;
+    const y = window.scrollY;
+    if (this._progressBar) {
+      this._progressBar.style.width = (max > 4 ? Math.min(y / max, 1) * 100 : 0) + '%';
+    }
+    if (this._reduceMotion()) return;
+    /* banner media drifts down slightly while the card stays put — depth, transform-only */
+    const media = document.querySelector('.page-banner video, .page-banner img');
+    if (media) media.style.transform = 'translate3d(0,' + Math.min(y * 0.08, 30) + 'px,0) scale(1.06)';
+    /* landing hero: slow zoom + drift as the page scrolls away from it */
+    const hero = document.querySelector('.home-hero-media');
+    if (hero) {
+      const drift = Math.min(y * 0.22, 220);
+      const zoom = 1 + Math.min(y * 0.00035, 0.1);
+      hero.style.transform = 'translate3d(0,' + drift + 'px,0) scale(' + zoom + ')';
+    }
+  },
+
+  _queueScrollFX() {
+    if (this._fxQueued) return;
+    this._fxQueued = true;
+    requestAnimationFrame(() => { this._fxQueued = false; this._scrollFX(); });
+  },
+
   async render() {
     const seq = ++this._renderSeq;
-    this.renderNav();
     const view = document.getElementById('view');
-    view.innerHTML = '';
     const mod = this.modules.find(m => m.id === this.current) || this.modules[0];
-    const banner = this.buildBanner(mod.id);
-    if (banner) view.append(banner);
-    view.append(UI.h('div', { class: 'page-head' }, [
-      UI.h('h1', {}, mod.title),
-      UI.h('p', { class: 'page-sub' }, mod.subtitle || ''),
-    ]));
+    const landing = !!mod.landing;
+    document.body.dataset.route = mod.id;
+    document.body.classList.toggle('route-home', landing);
+    if (this._revealIO) this._revealIO.disconnect();
+    this.renderNav();
+    view.innerHTML = '';
+    let skeleton = null;
+    if (!landing) {
+      const banner = this.buildBanner(mod.id);
+      if (banner) view.append(banner);
+      view.append(UI.h('div', { class: 'page-head' }, [
+        UI.h('h1', {}, mod.title),
+        UI.h('p', { class: 'page-sub' }, mod.subtitle || ''),
+      ]));
+      skeleton = this.buildSkeleton();
+      view.append(skeleton);
+    }
     try {
       const node = await mod.render(view);
       if (seq !== this._renderSeq) return; /* a newer render superseded this one */
+      if (skeleton) skeleton.remove();
       view.append(node);
+      this.decorateKpis(node);
+      this.observeReveals(node);
+      this._queueScrollFX();
     } catch (err) {
+      if (skeleton) skeleton.remove();
       view.append(UI.h('div', { class: 'error-box' }, `Failed to load ${mod.title}: ${err.message}`));
     }
   },
@@ -94,8 +211,191 @@ const App = {
     roleSelect.value = this.state.role;
     roleSelect.addEventListener('change', e => this.setRole(e.target.value));
     window.addEventListener('hashchange', () => this.render());
+    /* scroll-driven polish: reading progress + parallax (rAF-throttled, passive) */
+    this._progressBar = UI.h('div', { class: 'scroll-progress', 'aria-hidden': 'true' });
+    document.body.append(this._progressBar);
+    window.addEventListener('scroll', () => this._queueScrollFX(), { passive: true });
+    window.addEventListener('resize', () => this._queueScrollFX(), { passive: true });
     if (!location.hash) location.hash = '#/' + this.modules[0].id;
     this.render();
   },
 };
+
+/* --------------------------------------------------------------------------
+ * Landing page (#/home) — opens first. Read-only: real numbers from the API,
+ * real photos, no mutations. Lives here (not in js/modules/) so module files
+ * stay owned by their original authors.
+ * ------------------------------------------------------------------------ */
+App.registerModule({
+  id: 'home', title: 'Home', order: -1, landing: true,
+  subtitle: 'One shared view for flood response',
+
+  async render() {
+    /* Real numbers, best effort — the landing page still renders if the API sleeps. */
+    let camps = [], needs = [], inventory = [], volunteers = [];
+    try {
+      [camps, needs, inventory, volunteers] = await Promise.all([
+        API.list('camps'), API.list('needs'), API.list('inventory'), API.list('volunteers'),
+      ]);
+    } catch (e) { /* keep empty arrays; the stats strip shows dashes */ }
+
+    const campById = Object.fromEntries(camps.map(c => [c.id, c]));
+    const itemById = Object.fromEntries(inventory.map(i => [i.id, i]));
+    const activeCamps = camps.filter(c => c.status !== 'Closed');
+    const families = activeCamps.reduce((s, c) => s + (+c.current_families || 0), 0);
+    const reqTotal = needs.reduce((s, n) => s + +n.required_quantity, 0);
+    const fulTotal = needs.reduce((s, n) => s + +n.fulfilled_quantity, 0);
+    const overall = reqTotal ? Math.round((fulTotal / reqTotal) * 100) : 0;
+    const deployed = volunteers.filter(v => v.camp_id != null).length;
+
+    /* Critical gaps teaser — same rule as the dashboard: High priority under 40%. */
+    const gaps = needs
+      .filter(n => n.priority === 'High' && UI.pct(+n.fulfilled_quantity, +n.required_quantity) < 40)
+      .sort((a, b) => UI.pct(+a.fulfilled_quantity, +a.required_quantity)
+        - UI.pct(+b.fulfilled_quantity, +b.required_quantity))
+      .slice(0, 3);
+
+    const root = UI.h('div', { class: 'home' });
+
+    /* ---- Hero ---- */
+    root.append(UI.h('section', { class: 'home-hero' }, [
+      UI.h('video', {
+        class: 'home-hero-media', src: 'assets/videos/volunteers-hero.mp4',
+        autoplay: '', loop: '', muted: '', playsinline: '', preload: 'auto',
+        poster: 'assets/images/tents-aerial.jpg',
+      }),
+      UI.h('div', { class: 'home-hero-overlay' }),
+      UI.h('div', { class: 'home-hero-content' }, [
+        UI.h('p', { class: 'home-eyebrow' }, 'Sindh Flood Response · Live 2026'),
+        UI.h('h1', {}, [
+          UI.h('span', { class: 'home-hero-brand' }, 'ReliefHub'),
+          'One shared view for flood response',
+        ]),
+        UI.h('p', { class: 'home-hero-sub' },
+          'Eight camps, thousands of families, one operations dashboard — track needs, dispatch aid and coordinate volunteers in real time.'),
+        UI.h('div', { class: 'home-hero-ctas' }, [
+          UI.h('a', { class: 'btn btn-primary btn-lg', href: '#/dashboard' }, 'Open Dashboard'),
+          UI.h('a', { class: 'btn btn-home-ghost btn-lg', href: '#/camps' }, 'Explore Camps'),
+        ]),
+        UI.h('div', { class: 'home-scroll-hint', 'aria-hidden': 'true' }, [
+          'Scroll to explore',
+          (() => {
+            const s = document.createElement('span');
+            s.className = 'scroll-hint-ico';
+            s.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12l7 7 7-7'/></svg>";
+            return s;
+          })(),
+        ]),
+      ]),
+    ]));
+    /* muted must also be set as a property for every browser */
+    root.querySelector('.home-hero-media').muted = true;
+
+    /* ---- Mission: what we coordinate ---- */
+    const features = [
+      { img: 'assets/images/relief-camp.jpg', title: 'Camps',
+        copy: 'A live registry of every relief camp — capacity, occupancy and status across all eight sites, searchable by name or district.',
+        link: '#/camps', linkLabel: 'Explore camps' },
+      { img: 'assets/images/logistics-truck.jpg', title: 'Dispatches',
+        copy: 'Aid leaves the warehouse with a reservation on stock and lands as a confirmed delivery — nothing ships twice, nothing disappears.',
+        link: '#/dispatches', linkLabel: 'Track dispatches' },
+      { img: 'assets/images/volunteers-group.jpg', title: 'Volunteers',
+        copy: 'Every volunteer is matched to a camp and deployed where the need is loudest, with skills and availability on record.',
+        link: '#/volunteers', linkLabel: 'Meet the teams' },
+    ];
+    root.append(UI.h('section', { class: 'home-section home-mission' }, [
+      UI.h('div', { class: 'home-wrap' }, [
+        UI.h('p', { class: 'home-kicker' }, 'What we coordinate'),
+        UI.h('h2', {}, 'Three moving parts, one shared picture'),
+        UI.h('div', { class: 'home-features' }, features.map((f, i) =>
+          UI.h('article', { class: 'feature-card reveal', style: `--d:${i * 90}ms` }, [
+            UI.h('img', { class: 'feature-img', src: f.img, alt: f.title + ' — relief operations photo', loading: 'lazy', decoding: 'async' }),
+            UI.h('div', { class: 'feature-body' }, [
+              UI.h('h3', {}, f.title),
+              UI.h('p', {}, f.copy),
+              UI.h('a', { class: 'feature-link', href: f.link }, f.linkLabel + ' →'),
+            ]),
+          ]))),
+      ]),
+    ]));
+
+    /* ---- Live stats strip (count-up once visible) ---- */
+    const stats = [
+      { label: 'Active camps', value: activeCamps.length, format: v => String(v) },
+      { label: 'Families sheltered', value: families, format: v => v.toLocaleString() },
+      { label: 'Overall fulfilment', value: overall, format: v => v + '%' },
+      { label: 'Volunteers deployed', value: deployed, format: v => String(v) },
+    ];
+    const statsBand = UI.h('section', { class: 'home-section home-stats' }, [
+      UI.h('div', { class: 'home-wrap' }, [
+        UI.h('p', { class: 'home-kicker kicker-light' }, 'Live right now'),
+        UI.h('div', { class: 'home-stats-grid' }, stats.map((s, i) =>
+          UI.h('div', { class: 'stat reveal', style: `--d:${i * 80}ms` }, [
+            UI.h('div', { class: 'stat-numeral' }, '—'),
+            UI.h('div', { class: 'stat-label' }, s.label),
+          ]))),
+      ]),
+    ]);
+    root.append(statsBand);
+
+    /* ---- Critical needs teaser ---- */
+    const gapRows = gaps.length
+      ? gaps.map((n, i) => {
+        const p = UI.pct(+n.fulfilled_quantity, +n.required_quantity);
+        const color = p < 25 ? 'var(--bad)' : 'var(--warn)';
+        return UI.h('div', { class: 'gap-row reveal', style: `--d:${i * 80}ms` }, [
+          UI.h('div', { class: 'gap-meta' }, [
+            UI.h('span', { class: 'gap-item' }, (itemById[n.inventory_item_id] || {}).name || 'Supplies'),
+            UI.h('span', { class: 'gap-camp' }, 'at ' + ((campById[n.camp_id] || {}).name || 'Camp ' + n.camp_id)),
+          ]),
+          UI.h('div', { class: 'need-progress' }, [
+            UI.h('div', { class: 'progress' }, UI.h('div', { style: `width:${Math.min(p, 100)}%;background:${color}` })),
+            UI.h('span', {}, p + '%'),
+          ]),
+        ]);
+      })
+      : UI.h('p', { class: 'gap-none' }, 'No critical gaps right now — every high-priority need is above 40% fulfilled.');
+    root.append(UI.h('section', { class: 'home-section home-needs' }, [
+      UI.h('div', { class: 'home-wrap' }, [
+        UI.h('p', { class: 'home-kicker' }, 'Where help is needed most'),
+        UI.h('h2', {}, 'Critical needs, tracked in real time'),
+        UI.h('p', { class: 'home-lede' },
+          'High-priority needs still under 40% fulfilment, worst first. The dashboard keeps the full list — this is the top of it.'),
+        UI.h('div', { class: 'gap-list' }, gapRows),
+        UI.h('a', { class: 'btn btn-primary', href: '#/dashboard' }, 'Open the dashboard'),
+      ]),
+    ]));
+
+    /* ---- Footer ---- */
+    root.append(UI.h('footer', { class: 'home-footer' }, [
+      UI.h('div', { class: 'home-wrap home-footer-row' }, [
+        UI.h('span', {}, 'ReliefHub — flood relief coordination'),
+        UI.h('span', { class: 'home-footer-credit' }, 'Team Plot Armor · HacktoberFest 3.0 · 2026'),
+        UI.h('span', { class: 'home-footer-credit' }, 'Media: Unsplash'),
+      ]),
+    ]));
+
+    /* Count-up starts on the frame after the node is appended to the view. */
+    requestAnimationFrame(() => this._runCountUps(root, stats));
+    return root;
+  },
+
+  _runCountUps(root, stats) {
+    const numerals = root.querySelectorAll('.stat-numeral');
+    numerals.forEach((el, i) => {
+      const s = stats[i];
+      if (!s) return;
+      const finish = () => { el.textContent = s.format(s.value); };
+      if (App._reduceMotion()) return finish();
+      const t0 = performance.now(), dur = 1100;
+      (function tick(t) {
+        const p = Math.min((t - t0) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = s.format(Math.round(s.value * eased));
+        if (p < 1) requestAnimationFrame(tick); else finish();
+      })(t0);
+    });
+  },
+});
+
 window.addEventListener('load', () => App.boot());
