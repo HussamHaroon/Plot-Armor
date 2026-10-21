@@ -633,7 +633,7 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 .home-wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(var(--sp-5), 4vw, var(--sp-10)); }
 .home-section { padding: clamp(var(--sp-10), 7vw, var(--sp-12)) 0; }
 .home-kicker {
-  margin: 0 0 var(--sp-2); font-size: var(--fs-2xs); font-weight: 600;
+  margin: 0 0 var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 400;
   text-transform: uppercase; letter-spacing: var(--track-wide); color: var(--brand-strong);
 }
 .kicker-light { color: var(--brand-300); }
@@ -665,9 +665,20 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
   padding: clamp(var(--sp-12), 10vh, 140px) clamp(var(--sp-5), 4vw, var(--sp-10));
   color: #fff;
 }
+/* Ritual entrance (Rule 4): the video fades up from its poster while eyebrow,
+   headline, sub and CTAs walk in on the house easing, staged by --d. */
+.home-hero-media { animation: heroFade var(--dur-4) var(--ease) both; }
+@keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
+.home-hero-content > :not(.home-scroll-hint) {
+  animation: heroStage var(--dur-4) var(--ease) both;
+  animation-delay: var(--d, 0ms);
+}
+.home-scroll-hint { animation: hintFade var(--dur-4) var(--ease) both; animation-delay: var(--d, 0ms); }
+@keyframes heroStage { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes hintFade { from { opacity: 0; } to { opacity: 1; } }
 .home-eyebrow {
   display: inline-block; margin: 0 0 var(--sp-4);
-  font-size: var(--fs-2xs); font-weight: 600; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 400; text-transform: uppercase;
   letter-spacing: var(--track-wide); color: var(--brand-200);
   background: rgba(6, 26, 19, .5); border: 1px solid rgba(110, 231, 183, .3);
   padding: 6px 13px; border-radius: var(--r-pill);
@@ -679,8 +690,8 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 }
 .home-hero h1 {
   margin: 0 0 var(--sp-4); max-width: 18ch;
-  font-size: clamp(2.1rem, 1.4rem + 3.6vw, 3.9rem); font-weight: 800;
-  line-height: 1.08; letter-spacing: -0.025em; text-wrap: balance;
+  font-size: var(--fs-display); font-weight: 800;
+  line-height: 1.06; letter-spacing: -0.025em; text-wrap: balance;
   text-shadow: 0 2px 24px rgba(3, 22, 16, .45);
 }
 .home-hero-sub {
@@ -708,7 +719,9 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 /* ---- Mission features ---- */
 .home-mission { background:
   radial-gradient(900px 400px at 100% 0%, rgba(13, 92, 70, .05), transparent 55%), var(--panel); }
-.home-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-5); margin-top: var(--sp-6); }
+/* Asymmetric 5/7-leaning grid (Rule 12) — camps card leads, the other two
+ * follow narrower; collapses to one column on small screens. */
+.home-features { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: var(--sp-5); margin-top: var(--sp-6); align-items: stretch; }
 .feature-card {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
   overflow: hidden; box-shadow: var(--shadow-sm);
@@ -748,7 +761,7 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
   font-variant-numeric: tabular-nums; color: #fff;
 }
 .stat-label {
-  margin-top: var(--sp-2); font-size: var(--fs-2xs); font-weight: 600;
+  margin-top: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 400;
   text-transform: uppercase; letter-spacing: var(--track-wide); color: rgba(214, 249, 235, .66);
 }
 /* soft brand glow as each count-up lands (classes set by app.js on finish) */
@@ -777,25 +790,42 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 .gap-item { font-weight: 600; font-size: var(--fs-sm); }
 .gap-camp { font-size: var(--fs-xs); color: var(--muted); }
 .gap-none { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 var(--sp-5); }
-/* teaser bars start empty and ease to their target width once the row
-   reveals (app.js sets the width when the reveal observer fires; --d and its
-   stagger inherit from .gap-row) */
+/* teaser fills are transform-driven (Rule 10): they render scaled to 0 and
+   ease to scaleX(--w) once their row reveals (app.js sets --w + .fill-on;
+   --d and its stagger inherit from .gap-row) */
 .home-needs .progress { width: clamp(160px, 30vw, 300px); }
-.home-needs .progress > div {
-  transition: width 1s var(--ease);
+.home-needs .progress > div[data-w] {
+  width: 100%;
+  transform: scaleX(0); transform-origin: 0 50%;
+  transition: transform 1.2s var(--ease);
   transition-delay: calc(var(--d, 0ms) + 150ms);
 }
+.home-needs .progress > div[data-w].fill-on { transform: scaleX(var(--w, 1)); }
 
-/* ---- Mid-page motion: section rhythm + mission card tilt/float ---- */
-/* Rhythm: roomy scroll anchors and a soft vertical brand connector at the top
-   of each mid-page section, so the eye flows hero -> mission -> stats -> needs. */
-.home-section { position: relative; scroll-margin-top: clamp(72px, 12vh, 128px); }
+/* ---- Mid-page motion: the route draws with scroll (The Relay motif) ---- */
+/* Each mid-page section is a checkpoint: a route hairline draws itself down
+   (scaleY, transform-only) and a checkpoint dot pops when the section enters.
+   .reveal-line is the trigger class the observer tags with .revealed. */
+.home-section { position: relative; scroll-margin-top: calc(var(--topbar-h) + clamp(var(--sp-4), 6vh, 64px)); }
 .home-mission::before, .home-stats::before, .home-needs::before {
   content: ''; position: absolute; top: 0; left: 50%;
   width: 1px; height: clamp(48px, 8vh, 96px);
   background: linear-gradient(180deg, rgba(52, 211, 153, 0), rgba(52, 211, 153, .6), rgba(52, 211, 153, 0));
   pointer-events: none;
+  transform: scaleY(0); transform-origin: top;
+  transition: transform var(--dur-4) var(--ease) 120ms;
 }
+.home-mission::after, .home-stats::after, .home-needs::after {
+  content: ''; position: absolute; top: 0; left: 50%;
+  width: 7px; height: 7px; margin: -3px 0 0 -3px;
+  border-radius: 50%; background: var(--brand-400);
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, .16), 0 0 12px rgba(52, 211, 153, .65);
+  pointer-events: none;
+  transform: scale(0);
+  transition: transform var(--dur-3) var(--ease);
+}
+.home-section.revealed::before { transform: scaleY(1); }
+.home-section.revealed::after { transform: scale(1); }
 
 /* Mission cards: the staggered reveal owns the card transform; the 3D tilt
    lives on an inner wrapper (perspective comes from the card) so hover never
@@ -828,11 +858,16 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 .home-mission .feature-card:focus-within .feature-tilt { --lift: -4px; }
 
 /* Landing motion off-switch — placed after the base rules so it wins the
-   cascade (the global reduced-motion block sits earlier in the file). */
+   cascade (the global reduced-motion block sits earlier in the file).
+   Reveals, hero staging and the route line all jump to their final state. */
 @media (prefers-reduced-motion: reduce) {
+  .home-hero-media, .home-hero-content > * { animation: none; } /* no staged entrance */
   .home-mission .feature-card { animation: none; } /* no breathing float */
   .feature-tilt { transform: none; }               /* no hover tilt */
-  .home-needs .progress > div { transition-delay: 0ms; } /* bars fill instantly */
+  .home-mission::before, .home-stats::before, .home-needs::before { transform: scaleY(1); }
+  .home-mission::after, .home-stats::after, .home-needs::after { transform: scale(1); }
+  .home-needs .progress > div[data-w] { transform: scaleX(var(--w, 1)); transition-delay: 0ms; }
+  .reveal, .reveal-line { opacity: 1; transform: none; }
 }
 
 /* ---- Footer ---- */

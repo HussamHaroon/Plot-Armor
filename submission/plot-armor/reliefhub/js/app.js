@@ -122,10 +122,12 @@ const App = {
   },
 
   /* Fade+slide reveal for .reveal elements once they enter the viewport.
+   * .reveal-line elements (whole sections) reveal nothing themselves — their
+   * pseudo-element route connector draws in via CSS when .revealed lands.
    * Revealing a row also triggers any data-w progress fills inside it. */
   observeReveals(root) {
     if (this._revealIO) this._revealIO.disconnect();
-    const els = root.querySelectorAll('.reveal');
+    const els = root.querySelectorAll('.reveal, .reveal-line');
     if (!els.length) return;
     if (!('IntersectionObserver' in window)) {
       els.forEach(el => { el.classList.add('revealed'); this._fillBars(el); });
@@ -143,12 +145,14 @@ const App = {
     els.forEach(el => this._revealIO.observe(el));
   },
 
-  /* Progress fills tagged data-w render at width:0 and ease to their target
-   * once their row reveals (critical-needs teaser on #/home). Bars without
+  /* Progress fills tagged data-w render scaled to 0 and ease to their target
+   * once their row reveals (critical-needs teaser on #/home). Scale-driven —
+   * transform only, never width — so it stays on the compositor. Bars without
    * data-w — every module page — are untouched. */
   _fillBars(scope) {
     scope.querySelectorAll('.progress > div[data-w]').forEach(f => {
-      f.style.width = f.dataset.w + '%';
+      f.style.setProperty('--w', String(Math.min(+f.dataset.w, 100) / 100));
+      f.classList.add('fill-on');
     });
   },
 
@@ -273,7 +277,8 @@ App.registerModule({
 
     const root = UI.h('div', { class: 'home' });
 
-    /* ---- Hero ---- */
+    /* ---- Hero — ritual entrance: media fades up, then eyebrow → headline →
+       sub → CTAs → scroll hint walk in on the house easing (Rule 4) ---- */
     root.append(UI.h('section', { class: 'home-hero' }, [
       UI.h('video', {
         class: 'home-hero-media', src: 'assets/videos/volunteers-hero.mp4',
@@ -282,18 +287,18 @@ App.registerModule({
       }),
       UI.h('div', { class: 'home-hero-overlay' }),
       UI.h('div', { class: 'home-hero-content' }, [
-        UI.h('p', { class: 'home-eyebrow' }, 'Sindh Flood Response · Live 2026'),
-        UI.h('h1', {}, [
+        UI.h('p', { class: 'home-eyebrow', style: '--d:0ms' }, '[ Sindh Flood Response · Live 2026 ]'),
+        UI.h('h1', { style: '--d:110ms' }, [
           UI.h('span', { class: 'home-hero-brand' }, 'ReliefHub'),
           'One shared view for flood response',
         ]),
-        UI.h('p', { class: 'home-hero-sub' },
+        UI.h('p', { class: 'home-hero-sub', style: '--d:240ms' },
           'Eight camps, thousands of families, one operations dashboard — track needs, dispatch aid and coordinate volunteers in real time.'),
-        UI.h('div', { class: 'home-hero-ctas' }, [
+        UI.h('div', { class: 'home-hero-ctas', style: '--d:380ms' }, [
           UI.h('a', { class: 'btn btn-primary btn-lg', href: '#/dashboard' }, 'Open Dashboard'),
           UI.h('a', { class: 'btn btn-home-ghost btn-lg', href: '#/camps' }, 'Explore Camps'),
         ]),
-        UI.h('div', { class: 'home-scroll-hint', 'aria-hidden': 'true' }, [
+        UI.h('div', { class: 'home-scroll-hint', style: '--d:620ms', 'aria-hidden': 'true' }, [
           'Scroll to explore',
           (() => {
             const s = document.createElement('span');
@@ -307,7 +312,7 @@ App.registerModule({
     /* muted must also be set as a property for every browser */
     root.querySelector('.home-hero-media').muted = true;
 
-    /* ---- Mission: what we coordinate ---- */
+    /* ---- Mission: what we coordinate (checkpoint 01) ---- */
     const features = [
       { img: 'assets/images/relief-camp.jpg', title: 'Camps',
         copy: 'A live registry of every relief camp — capacity, occupancy and status across all eight sites, searchable by name or district.',
@@ -319,12 +324,12 @@ App.registerModule({
         copy: 'Every volunteer is matched to a camp and deployed where the need is loudest, with skills and availability on record.',
         link: '#/volunteers', linkLabel: 'Meet the teams' },
     ];
-    root.append(UI.h('section', { class: 'home-section home-mission' }, [
+    root.append(UI.h('section', { class: 'home-section home-mission reveal-line' }, [
       UI.h('div', { class: 'home-wrap' }, [
-        UI.h('p', { class: 'home-kicker' }, 'What we coordinate'),
-        UI.h('h2', {}, 'Three moving parts, one shared picture'),
+        UI.h('p', { class: 'home-kicker reveal' }, '[ 01 · What we coordinate ]'),
+        UI.h('h2', { class: 'reveal', style: '--d:90ms' }, 'Three moving parts, one shared picture'),
         UI.h('div', { class: 'home-features' }, features.map((f, i) =>
-          UI.h('article', { class: 'feature-card reveal', style: `--d:${i * 110}ms` }, [
+          UI.h('article', { class: 'feature-card reveal', style: `--d:${i * 110 + 180}ms` }, [
             /* inner wrapper takes the hover tilt so it never fights the reveal transform */
             UI.h('div', { class: 'feature-tilt' }, [
               UI.h('img', { class: 'feature-img', src: f.img, alt: f.title + ' — relief operations photo', loading: 'lazy', decoding: 'async' }),
@@ -345,13 +350,13 @@ App.registerModule({
       { label: 'Overall fulfilment', value: overall, format: v => v + '%' },
       { label: 'Volunteers deployed', value: deployed, format: v => String(v) },
     ];
-    const statsBand = UI.h('section', { class: 'home-section home-stats' }, [
+    const statsBand = UI.h('section', { class: 'home-section home-stats reveal-line' }, [
       UI.h('div', { class: 'home-wrap' }, [
-        UI.h('p', { class: 'home-kicker kicker-light' }, 'Live right now'),
+        UI.h('p', { class: 'home-kicker kicker-light reveal' }, '[ 02 · Live right now ]'),
         UI.h('div', { class: 'home-stats-grid' }, stats.map((s, i) =>
-          UI.h('div', { class: 'stat reveal', style: `--d:${i * 80}ms` }, [
+          UI.h('div', { class: 'stat reveal', style: `--d:${i * 80 + 90}ms` }, [
             UI.h('div', { class: 'stat-numeral' }, '—'),
-            UI.h('div', { class: 'stat-label' }, s.label),
+            UI.h('div', { class: 'stat-label' }, '0' + (i + 1) + ' · ' + s.label),
           ]))),
       ]),
     ]);
@@ -362,33 +367,33 @@ App.registerModule({
       ? gaps.map((n, i) => {
         const p = UI.pct(+n.fulfilled_quantity, +n.required_quantity);
         const color = p < 25 ? 'var(--bad)' : 'var(--warn)';
-        return UI.h('div', { class: 'gap-row reveal', style: `--d:${i * 80}ms` }, [
+        return UI.h('div', { class: 'gap-row reveal', style: `--d:${i * 80 + 90}ms` }, [
           UI.h('div', { class: 'gap-meta' }, [
             UI.h('span', { class: 'gap-item' }, (itemById[n.inventory_item_id] || {}).name || 'Supplies'),
             UI.h('span', { class: 'gap-camp' }, 'at ' + ((campById[n.camp_id] || {}).name || 'Camp ' + n.camp_id)),
           ]),
           UI.h('div', { class: 'need-progress' }, [
-            /* starts empty; eases to the data-w target once the row reveals */
-            UI.h('div', { class: 'progress' }, UI.h('div', { style: `width:0%;background:${color}`, 'data-w': String(Math.min(p, 100)) })),
+            /* scaled to 0; eases to the data-w target on the reveal (see _fillBars) */
+            UI.h('div', { class: 'progress' }, UI.h('div', { style: `background:${color}`, 'data-w': String(Math.min(p, 100)) })),
             UI.h('span', {}, p + '%'),
           ]),
         ]);
       })
       : UI.h('p', { class: 'gap-none' }, 'No critical gaps right now — every high-priority need is above 40% fulfilled.');
-    root.append(UI.h('section', { class: 'home-section home-needs' }, [
+    root.append(UI.h('section', { class: 'home-section home-needs reveal-line' }, [
       UI.h('div', { class: 'home-wrap' }, [
-        UI.h('p', { class: 'home-kicker' }, 'Where help is needed most'),
-        UI.h('h2', {}, 'Critical needs, tracked in real time'),
-        UI.h('p', { class: 'home-lede' },
+        UI.h('p', { class: 'home-kicker reveal' }, '[ 03 · Where help is needed most ]'),
+        UI.h('h2', { class: 'reveal', style: '--d:90ms' }, 'Critical needs, tracked in real time'),
+        UI.h('p', { class: 'home-lede reveal', style: '--d:160ms' },
           'High-priority needs still under 40% fulfilment, worst first. The dashboard keeps the full list — this is the top of it.'),
         UI.h('div', { class: 'gap-list' }, gapRows),
-        UI.h('a', { class: 'btn btn-primary', href: '#/dashboard' }, 'Open the dashboard'),
+        UI.h('a', { class: 'btn btn-primary reveal', style: '--d:240ms', href: '#/dashboard' }, 'Open the dashboard'),
       ]),
     ]));
 
     /* ---- Footer ---- */
     root.append(UI.h('footer', { class: 'home-footer' }, [
-      UI.h('div', { class: 'home-wrap home-footer-row' }, [
+      UI.h('div', { class: 'home-wrap home-footer-row reveal' }, [
         UI.h('span', {}, 'ReliefHub — flood relief coordination'),
         UI.h('span', { class: 'home-footer-credit' }, 'Team Plot Armor · HacktoberFest 3.0 · 2026'),
         UI.h('span', { class: 'home-footer-credit' }, 'Media: Unsplash'),
