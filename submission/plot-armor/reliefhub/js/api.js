@@ -1,9 +1,13 @@
 /* ReliefHub API client — all reads/writes go through HTTP to the mock API.
- * API base can be overridden for local testing: index.html?api=http://localhost:3011
- * Demo mode: when no API server is reachable (e.g. the static GitHub Pages
- * deployment), GET requests fall back to the bundled seed file
- * api-server/db.json so the whole app stays browsable read-only. */
-const API_BASE = new URLSearchParams(location.search).get('api') || 'http://localhost:3000';
+ * API base resolution (?api= wins over everything):
+ *   - local pages (localhost/127.0.0.1) -> http://localhost:3000
+ *   - deployed pages (github.io etc.)   -> the hosted Render instance
+ * Demo mode: when no API server is reachable, GET requests fall back to the
+ * bundled seed file api-server/db.json so the app stays browsable read-only. */
+const API_BASE = new URLSearchParams(location.search).get('api')
+  || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+    ? 'http://localhost:3000'
+    : 'https://reliefhub-api.onrender.com');
 
 const API = {
   _demoMode: false,

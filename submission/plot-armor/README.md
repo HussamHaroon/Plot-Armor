@@ -25,7 +25,7 @@ npx -y json-server@0.17.4 api-server/db.json --port 3000
 python -m http.server 8080
 # open http://localhost:8080  (?api=<url> points the app at any running API instance)
 ```
-Without an API server the app automatically falls back to the bundled seed data in read-only demo mode. The same API also runs containerized on a free Hugging Face Space for the public demo.
+Without an API server the app automatically falls back to the bundled seed data in read-only demo mode. Live hosted API for the public demo: https://reliefhub-api.onrender.com (free Render instance - first request after idle may take ~50s to wake it).
 
 ## 2) Automated Security Vulnerability Scanning in a CI/CD Pipeline *(issue #2, DevOps)*
 
