@@ -1,0 +1,13 @@
+{
+  "name": "reliefhub-mock-api",
+  "version": "1.0.0",
+  "description": "ReliefHub mock API (json-server) - deployable to free hosts like Render",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "json-server": "0.17.4"
+  }
+}
