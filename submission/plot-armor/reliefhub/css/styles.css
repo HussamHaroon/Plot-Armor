@@ -99,7 +99,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: var(--track-t
 
 /* Keyboard visibility — never rely on hover alone */
 :focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 2px; border-radius: 4px; }
-.sidebar :focus-visible { outline-color: var(--brand-300); }
+.topbar :focus-visible { outline-color: var(--brand-300); }
 
 /* Skip link — hidden until focused (a11y) */
 .skip-link {
@@ -120,21 +120,30 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: var(--track-t
 ::-webkit-scrollbar-thumb:hover { background: #8fa8a0; }
 * { scrollbar-width: thin; scrollbar-color: #a9bfb6 transparent; }
 
-/* ---------- 3. Layout shell ---------- */
-.layout { display: flex; min-height: 100vh; }
+/* ---------- 3. Layout shell — one horizontal topbar at every width ---------- */
+:root { --topbar-h: 58px; }
 
-.sidebar {
-  width: var(--sidebar-w); flex: none; color: #e6fbf2;
-  padding: var(--sp-5) var(--sp-3) var(--sp-4);
-  display: flex; flex-direction: column; gap: var(--sp-5);
-  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+/* Sticky brand bar — solid deep-green register (Rule 11): content always
+   scrolls beneath it, never floats over naked type. */
+.topbar {
+  position: sticky; top: 0; z-index: 60;
+  color: #e6fbf2;
   background:
-    radial-gradient(340px 220px at 0% 0%, rgba(52, 211, 153, .16), transparent 60%),
-    radial-gradient(300px 260px at 110% 105%, rgba(16, 185, 129, .12), transparent 55%),
-    linear-gradient(170deg, #10604a 0%, var(--brand) 32%, var(--brand-deep) 72%, var(--brand-ink) 100%);
-  box-shadow: 1px 0 0 rgba(110, 231, 183, .10), 3px 0 24px rgba(5, 32, 24, .35);
+    radial-gradient(420px 160px at 0% 0%, rgba(52, 211, 153, .14), transparent 60%),
+    radial-gradient(380px 180px at 108% 120%, rgba(16, 185, 129, .10), transparent 55%),
+    linear-gradient(170deg, #10604a 0%, var(--brand) 34%, var(--brand-deep) 74%, var(--brand-ink) 100%);
+  box-shadow: 0 1px 0 rgba(110, 231, 183, .12), 0 8px 24px -16px rgba(4, 29, 21, .45);
+  transition: box-shadow var(--dur-2) var(--ease);
 }
-.brand { display: flex; gap: var(--sp-3); align-items: center; padding: 0 var(--sp-1); }
+.topbar.scrolled { box-shadow: 0 1px 0 rgba(110, 231, 183, .18), 0 14px 34px -14px rgba(4, 29, 21, .62); }
+
+.topbar-inner {
+  display: flex; align-items: center; gap: var(--sp-5);
+  padding: 0 clamp(var(--sp-4), 2.6vw, var(--sp-10));
+  min-height: var(--topbar-h);
+}
+
+.brand { display: flex; gap: var(--sp-3); align-items: center; text-decoration: none; flex: none; }
 .brand-mark {
   background: linear-gradient(150deg, var(--brand-strong), var(--brand-deep));
   color: #fff; font-weight: 700; border-radius: var(--r-md); padding: 10px 8px; font-size: 15px;
@@ -144,14 +153,15 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: var(--track-t
   border: 2px solid rgba(163, 246, 214, .45);
   box-shadow: 0 4px 14px rgba(3, 22, 16, .5), 0 0 0 4px rgba(255, 255, 255, .06);
 }
+.brand-text { display: flex; flex-direction: column; min-width: 0; }
 .brand-name {
   font-family: var(--font-display); font-weight: 700; font-size: 1.0625rem;
-  letter-spacing: -0.01em; color: #fff;
+  letter-spacing: -0.01em; color: #fff; line-height: 1.2;
 }
 .brand-sub { font-size: var(--fs-2xs); color: rgba(214, 249, 235, .62); letter-spacing: .03em; margin-top: 1px; }
 
-/* Role switch — dark glass control */
-.role-switch { display: flex; flex-direction: column; gap: 5px; padding: 0 var(--sp-1); }
+/* Role switch — dark glass control, pinned right */
+.role-switch { display: flex; flex-direction: column; gap: 5px; flex: none; margin-left: auto; }
 .role-switch span {
   font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--track-wide);
   color: rgba(214, 249, 235, .55); font-weight: 600;
@@ -169,52 +179,75 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: var(--track-t
 .role-switch select:hover { border-color: rgba(163, 246, 214, .45); background-color: rgba(4, 26, 19, .55); }
 .role-switch select option { color: var(--ink); background: #fff; }
 
-/* Nav */
-.nav { display: flex; flex-direction: column; gap: 3px; }
+/* Nav — one horizontal checkpoint rail, center/right; scrollable when tight.
+   Same ids (#main-nav) and classes (.nav/.nav-item) as before — only the
+   direction changed. */
+.nav {
+  display: flex; flex-direction: row; align-items: center; gap: 2px;
+  min-width: 0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  scroll-padding-inline: var(--sp-2);
+}
+.nav::-webkit-scrollbar { display: none; }
 .nav::before {
-  content: 'Operations'; display: block;
-  font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--track-wide);
+  content: '[ OPERATIONS ]'; display: block; flex: none;
+  font-family: var(--font-mono); font-size: var(--fs-2xs); text-transform: uppercase;
+  letter-spacing: var(--track-wide);
   color: rgba(214, 249, 235, .48); font-weight: 600;
-  padding: 0 var(--sp-2) var(--sp-1);
+  padding: 0 var(--sp-3) 0 var(--sp-2);
 }
 .nav-item {
-  position: relative;
-  color: #c9f2e0; text-decoration: none; padding: 9px 12px; border-radius: var(--r-sm);
+  position: relative; flex: none; white-space: nowrap;
+  color: #c9f2e0; text-decoration: none; padding: 9px 13px; border-radius: var(--r-sm);
   font-size: var(--fs-sm); font-weight: 500;
-  display: flex; gap: 10px; align-items: center;
+  display: flex; gap: 8px; align-items: center;
   transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease),
               transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
 }
-.nav-item:hover { background: rgba(255, 255, 255, .09); color: #fff; transform: translateX(3px); }
+.nav-item:hover { background: rgba(255, 255, 255, .09); color: #fff; transform: translateY(-1px); }
 .nav-item.active {
   background: linear-gradient(135deg, rgba(52, 211, 153, .26), rgba(16, 185, 129, .12));
   color: #fff; font-weight: 600;
   box-shadow: var(--glow-brand), inset 0 0 0 1px rgba(110, 231, 183, .28);
 }
-.nav-item.active::before {
-  content: ''; position: absolute; left: -4px; top: 20%; bottom: 20%; width: 3px;
+.nav-item.active::before { /* checkpoint tick under the active item */
+  content: ''; position: absolute; left: 10px; right: 10px; bottom: 2px; height: 2px;
   border-radius: var(--r-pill);
-  background: linear-gradient(180deg, var(--brand-300), var(--brand-400));
+  background: linear-gradient(90deg, var(--brand-300), var(--brand-400));
   box-shadow: 0 0 10px rgba(52, 211, 153, .8);
 }
 .nav-item.active:hover { transform: none; }
 .nav-ico {
-  width: 19px; height: 19px; display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;
   flex: none; opacity: .92;
 }
 .nav-ico svg { width: 100%; height: 100%; display: block; }
-.sidebar-foot {
-  margin-top: auto; font-size: var(--fs-2xs); color: rgba(214, 249, 235, .55);
-  line-height: 1.55; padding: var(--sp-3) var(--sp-1) 0;
-  border-top: 1px solid rgba(163, 246, 214, .12);
+
+/* Route hairline that runs under the bar — draws itself in on load (Rule 4) */
+.topbar-route {
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(110, 231, 183, 0) 0%, rgba(110, 231, 183, .55) 12%,
+    rgba(110, 231, 183, .18) 55%, rgba(110, 231, 183, 0) 100%);
+  transform-origin: left center;
+  animation: routeDraw 1200ms var(--ease) both;
 }
-.media-credit { font-size: 9.5px; color: rgba(214, 249, 235, .38); margin-top: 4px; }
+@keyframes routeDraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 .view {
-  flex: 1; min-width: 0;
+  width: 100%; max-width: var(--content-max); margin: 0 auto;
   padding: clamp(var(--sp-5), 2vw, var(--sp-8)) clamp(var(--sp-5), 2.6vw, var(--sp-10));
-  max-width: var(--content-max);
 }
+
+/* Slim attribution foot (formerly the sidebar foot) — hidden on the landing
+   route, which carries its own footer. */
+.app-foot {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-4);
+  flex-wrap: wrap; padding: var(--sp-3) clamp(var(--sp-5), 2.6vw, var(--sp-10)) var(--sp-4);
+  font-size: var(--fs-2xs); color: rgba(214, 249, 235, .55);
+  background: var(--brand-ink); border-top: 1px solid rgba(163, 246, 214, .12);
+}
+body.route-home .app-foot { display: none; }
+.media-credit { font-size: 9.5px; color: rgba(214, 249, 235, .38); }
 
 /* Page transition — every direct child of the view rises in, lightly staggered */
 @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -525,34 +558,21 @@ p.empty { display: block; padding: var(--sp-5); }
 .muted { color: var(--muted); font-size: var(--fs-xs); }
 .hint { line-height: 1.6; }
 
-/* ---------- 16. Responsive — sidebar becomes a top bar under 900px ---------- */
+/* ---------- 16. Responsive — the topbar compacts, the nav rail scrolls ---------- */
+@media (max-width: 1100px) {
+  .nav::before { display: none; } /* manifest label yields space to the rail */
+}
 @media (max-width: 900px) {
-  .layout { display: block; }
-  .sidebar {
-    width: auto; height: auto; position: sticky; top: 0; z-index: 40;
-    display: grid; grid-template-columns: 1fr auto; align-items: center;
-    gap: var(--sp-2) var(--sp-4); padding: var(--sp-3) var(--sp-4);
-    box-shadow: 0 10px 28px rgba(5, 32, 24, .38);
-    background:
-      radial-gradient(340px 200px at 100% 0%, rgba(52, 211, 153, .14), transparent 60%),
-      linear-gradient(170deg, #10604a 0%, var(--brand) 40%, var(--brand-deep) 100%);
-  }
-  .brand { padding: 0; }
+  :root { --topbar-h: 54px; }
+  .topbar-inner { gap: var(--sp-3); min-height: var(--topbar-h); padding-inline: var(--sp-4); }
+  .brand-sub { display: none; }
+  .brand-logo { width: 32px; height: 32px; }
   .role-switch { gap: 0; }
   .role-switch span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .role-switch select { padding-block: 6px; font-size: var(--fs-2xs); }
-  .nav {
-    grid-column: 1 / -1; flex-direction: row; overflow-x: auto; gap: 6px;
-    scrollbar-width: none; -ms-overflow-style: none;
-    padding-bottom: 2px; margin-top: 2px;
-  }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav::before { display: none; }
-  .nav-item { white-space: nowrap; padding: 7px 13px; font-size: var(--fs-xs); }
-  .nav-item:hover { transform: none; }
-  .nav-item.active::before { left: 8px; top: auto; bottom: 1px; right: 8px; width: auto; height: 2px; }
-  .sidebar-foot { display: none; }
-  .view { padding: var(--sp-5) var(--sp-4) var(--sp-10); max-width: none; }
+  .nav { margin-inline: var(--sp-1); }
+  .nav-item { padding: 7px 12px; font-size: var(--fs-xs); }
+  .view { padding: var(--sp-5) var(--sp-4) var(--sp-10); }
   .page-banner { height: clamp(150px, 30vw, 200px); border-radius: var(--r-md); }
   .data-table { display: block; overflow-x: auto; }
   .data-table th { position: static; }
@@ -616,7 +636,7 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 
 /* ---- Hero ---- */
 .home-hero {
-  position: relative; min-height: 100vh; min-height: 100svh;
+  position: relative; min-height: calc(100vh - var(--topbar-h)); min-height: calc(100svh - var(--topbar-h));
   display: flex; align-items: center; overflow: hidden; isolation: isolate;
   background: var(--brand-ink);
 }
@@ -820,7 +840,7 @@ body.route-home .view > * { animation: none; } /* sections use .reveal instead *
 
 /* ---- Landing responsive ---- */
 @media (max-width: 900px) {
-  .home-hero { min-height: 92svh; }
+  .home-hero { min-height: calc(92svh - var(--topbar-h)); }
   .home-hero-content { padding-top: var(--sp-12); }
   .home-hero-ctas { flex-direction: column; align-items: stretch; }
   .home-hero-ctas .btn { text-align: center; }

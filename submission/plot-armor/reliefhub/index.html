@@ -16,16 +16,17 @@
 </head>
 <body>
   <a class="skip-link" href="#view">Skip to content</a>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="brand">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/home" aria-label="ReliefHub home">
         <img class="brand-logo" src="assets/images/logo-mark.jpg" alt="ReliefHub logo" width="38" height="38"
              onerror="this.style.display='none'">
-        <div>
-          <div class="brand-name">ReliefHub</div>
-          <div class="brand-sub">Flood Relief Coordination</div>
-        </div>
-      </div>
+        <span class="brand-text">
+          <span class="brand-name">ReliefHub</span>
+          <span class="brand-sub">Flood Relief Coordination</span>
+        </span>
+      </a>
+      <nav id="main-nav" class="nav" aria-label="Main navigation"></nav>
       <label class="role-switch">
         <span>Viewing as</span>
         <select id="role-select">
@@ -33,14 +34,14 @@
           <option value="volunteer">Field Volunteer</option>
         </select>
       </label>
-      <nav id="main-nav" class="nav" aria-label="Main navigation"></nav>
-      <div class="sidebar-foot">
-        <div>Sindh Flood Response · 2026</div>
-        <div class="media-credit">Media: Unsplash — Salah Darwish, Jeff Ackley, Khalil Radi, CHUTTERSNAP, jhosel rodriguez, Joel Muniz, Nico Smit, Hannah Busing</div>
-      </div>
-    </aside>
-    <main id="view" class="view" tabindex="-1"></main>
-  </div>
+    </div>
+    <div class="topbar-route" aria-hidden="true"></div>
+  </header>
+  <main id="view" class="view" tabindex="-1"></main>
+  <footer class="app-foot">
+    <span>Sindh Flood Response · 2026</span>
+    <span class="media-credit">Media: Unsplash — Salah Darwish, Jeff Ackley, Khalil Radi, CHUTTERSNAP, jhosel rodriguez, Joel Muniz, Nico Smit, Hannah Busing</span>
+  </footer>
 
   <!-- Load order matters: framework first, modules register themselves, app boots on load -->
   <script src="js/api.js"></script>

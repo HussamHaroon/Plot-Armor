@@ -156,11 +156,13 @@ const App = {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   },
 
-  /* One rAF-throttled scroll pass: top progress bar, banner parallax, hero depth. */
+  /* One rAF-throttled scroll pass: topbar scrim, progress bar, banner parallax, hero depth. */
   _scrollFX() {
     const doc = document.documentElement;
     const max = doc.scrollHeight - window.innerHeight;
     const y = window.scrollY;
+    /* deepens the sticky bar's shadow once content is really scrolling beneath it */
+    if (this._topbar) this._topbar.classList.toggle('scrolled', y > 8);
     if (this._progressBar) {
       this._progressBar.style.width = (max > 4 ? Math.min(y / max, 1) * 100 : 0) + '%';
     }
@@ -224,7 +226,8 @@ const App = {
     roleSelect.value = this.state.role;
     roleSelect.addEventListener('change', e => this.setRole(e.target.value));
     window.addEventListener('hashchange', () => this.render());
-    /* scroll-driven polish: reading progress + parallax (rAF-throttled, passive) */
+    this._topbar = document.querySelector('.topbar');
+    /* scroll-driven polish: bar scrim + reading progress + parallax (rAF-throttled, passive) */
     this._progressBar = UI.h('div', { class: 'scroll-progress', 'aria-hidden': 'true' });
     document.body.append(this._progressBar);
     window.addEventListener('scroll', () => this._queueScrollFX(), { passive: true });
